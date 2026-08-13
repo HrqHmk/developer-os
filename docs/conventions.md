@@ -219,6 +219,7 @@ O número da Issue no nome não é decorativo: torna o contexto **recuperável p
 ### 11.3 Pull Requests
 
 - **Um PR por unidade de trabalho**, dimensionado pelo que um humano consegue revisar de fato (ADR-0004 §2).
+- Issues e PRs são escritos **em inglês**, conforme `CLAUDE.md` §Language & Communication. Diferente de `docs/`, que permanece em português, esses artefatos são a superfície pública do fluxo de trabalho.
 - Conteúdo mínimo: **link da Issue** (ou justificativa da ausência dela), **o que mudou**, **por quê**, **como foi verificado** e **se foi gerado por agente**.
 - Decisões tomadas durante a implementação — inclusive o que se decidiu **não** fazer — ficam registradas no PR quando não forem promovidas a documentação (G5).
 

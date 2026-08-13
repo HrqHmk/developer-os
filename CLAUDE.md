@@ -14,6 +14,7 @@ Before making architectural decisions, consult:
 ## Language & Communication
 
 - Write code, comments, and commit messages in English.
+- Write GitHub Issues and Pull Requests in English.
 - Write documentation (`docs/`, `docs/adr/`, etc.) in Portuguese (matching existing docs).
 - Respond in Portuguese during chat conversations unless requested otherwise.
 
