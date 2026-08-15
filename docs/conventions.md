@@ -125,9 +125,11 @@ src/content/
 ├── data/             # conteúdo estruturado (módulos TypeScript declarativos)
 ├── schemas/          # schemas de frontmatter, um por tipo de conteúdo
 └── pipeline/         # descoberta, validação e processamento de Markdown
+    └── __fixtures__/ # conteúdo de teste (ver §12)
 ```
 
 - `entries/` contém **dado**, nunca código. `data/`, `schemas/` e `pipeline/` contêm **código**, nunca prosa longa.
+- **`entries/` é a única origem de conteúdo publicável.** Fixtures de teste vivem em `__fixtures__/` e nunca em `entries/` — conteúdo de teste não entra no build nem no site (§12.3).
 - Cada entrada editorial é um **diretório próprio** com `index.md`, e não um arquivo solto — é o diretório que torna a entrada autocontida junto com suas imagens (P8).
 - Nomes de tipo e de slug em **kebab-case**. O nome do diretório da entrada é o **identificador estável** daquele conteúdo.
 - O mapeamento entre identificador e URL pública é assunto de roteamento e **não é definido por este documento**.
@@ -169,6 +171,7 @@ src/content/
 - Agentes devem consultar **este documento, `architecture.md`, `design-system.md` e os ADRs aceitos** antes de propor padrões da stack.
 - **Não assumir padrões antigos**: sintaxe ou configuração do Tailwind v3 (incluindo `tailwind.config.js`), nem configurações default do shadcn/ui que contrariem o registrado aqui.
 - **Não assumir Radix UI**: a base deste projeto é Base UI, ainda que muito material disponível sobre shadcn/ui pressuponha Radix.
+- **Não assumir Jest**: o runner deste projeto é o Vitest (ADR-0005). Não usar `jest.fn`, `jest.mock`, `jest.spyOn` nem configuração de Jest — os equivalentes vêm de `vi`, importado de `vitest`.
 - Mudanças geradas por IA **continuam sujeitas a revisão humana**, conforme o princípio de human-in-the-loop do `CLAUDE.md`.
 
 ### 9.1 Criar e modificar conteúdo
@@ -247,6 +250,10 @@ G3 exige leitura humana sempre; o que varia é a profundidade.
 - **Leitura linha a linha**: pipeline de conteúdo, schemas, design tokens, dependências, configuração e todo output gerado por CLI (exigência do ADR-0002).
 - **Leitura de conferência**: conteúdo editorial e ajustes de redação.
 
+**Testes entram na leitura linha a linha** quando cobrem propriedade sem outro enforcement (T2 do ADR-0005 — hoje P9 e o contrato de rejeição dos schemas) e quando o PR **altera uma assertion existente** (T5). Nos dois casos o teste é a garantia, e uma garantia lida por cima não é garantia.
+
+O ponto de atenção específico é código gerado por agente: quem escreve o código e o teste tende a assertar o comportamento que produziu, e não o pretendido. A pergunta na revisão não é "o teste passa?", e sim **"este teste falharia se o comportamento estivesse errado?"**.
+
 ### 11.7 Revisão por segundo agente
 
 Mecanismo **auxiliar**, conforme G3. Não é gate de merge e não substitui §11.6.
@@ -265,3 +272,65 @@ Detalhamento operacional de G6.
 - Registra no PR o que fez e o que decidiu não fazer.
 - Diante de decisão arquitetural não documentada, **para e escala na Issue** — não decide e não contorna (`CLAUDE.md` §Human-in-the-loop).
 - **Nunca** executa merge, push em `main`, force-push em branch compartilhada, remoção de branches/tags ou alteração da proteção de `main`.
+
+---
+
+## 12. Testes
+
+Convenções derivadas do ADR-0005. As propriedades duráveis (T1–T11) estão no ADR; esta seção registra **onde os testes ficam e como são escritos**. Trocar qualquer item desta seção não exige novo ADR, desde que T1–T11 continuem satisfeitas.
+
+### 12.1 Ferramentas e momento de instalação
+
+| Camada | Ferramenta | Instalada quando |
+|---|---|---|
+| Unitário e integração | Vitest (4.1.x) | primeiro código de `src/content/pipeline/` |
+| Componente | React Testing Library (16.3.x) + user-event (14.6.x), ambiente jsdom (30.x) | primeiro componente com comportamento próprio |
+| E2E | Playwright (1.62.x) | primeiro fluxo E2E obrigatório, idealmente junto do CI/CD |
+
+Nenhuma dependência de teste é instalada antes disso (T10). As versões seguem §2: fixadas pelo lockfile, atualizadas de forma deliberada.
+
+### 12.2 Localização e nomenclatura
+
+- Testes unitários e de integração são **co-locados** com o código que verificam: `src/content/pipeline/markdown.test.ts` ao lado de `markdown.ts`.
+- **Não criar diretório espelho** de `src/`. A co-locação é deliberada: o teste aparece na mesma leitura que o fonte, e sua ausência fica visível.
+- Sufixo **`.test.ts`** / **`.test.tsx`**. Não usar `.spec.`, para não manter dois padrões.
+- E2E vive em **`tests/e2e/`**, único lugar fora de `src/`, por não ter fonte correspondente para acompanhar.
+- Ambiente de execução é **declarado por arquivo** quando divergir do padrão de Node — testes de componente rodam em jsdom, o resto em Node. Não configurar jsdom globalmente: a maioria dos testes não precisa dele e pagaria o custo à toa.
+
+### 12.3 Fixtures
+
+- Fixtures de conteúdo ficam em **`src/content/pipeline/__fixtures__/`**, nunca em `src/content/entries/` (§8.1). Conteúdo de teste não é conteúdo publicável e não pode entrar no build.
+- As fixtures incluem **casos negativos** — frontmatter inválido, campo desconhecido, HTML bruto — e o teste asserta que eles **falham**. Um pipeline que só é exercitado com entrada válida não verifica P4 nem P9.
+- **Preferir fixture em disco a mock** quando o alvo é a camada de conteúdo (T10): é mais legível no diff, mais próxima do dado real e mais interpretável por agentes.
+- Sem framework de mocking além do que o Vitest já oferece (`vi`).
+
+### 12.4 O que escrever e o que não escrever
+
+Obrigatório por T3: `src/content/pipeline/`, `src/content/schemas/`, camada de mapeamento de `src/integrations/`, e lógica com ramificação não-óbvia.
+
+Não escrever:
+
+- teste de componente de apresentação sem comportamento próprio;
+- teste que exercita biblioteca de terceiros — zod, Base UI, TanStack Router (T7). Testar o **contrato do projeto**, não a dependência;
+- teste que duplica o que o build já falha (T1);
+- assertion sobre saída de modelo generativo (T6) — verificar o adaptador, a partir de fixtures.
+
+**Teste de componente não verifica aparência** (T8). Conformidade com o `design-system.md` — tokens, escala de spacing, tema — não é coberta por esta camada e permanece com convenção e review (§4, ADR-0002).
+
+### 12.5 Correção de defeito
+
+Toda correção entra com teste que **falha antes** da correção (T4). O teste descreve o defeito observado, não a implementação escolhida.
+
+O PR registra que o teste falhou antes — é o que distingue um teste de regressão de um teste escrito depois para acompanhar o código.
+
+### 12.6 Alterar teste existente
+
+Alterar uma assertion é **alterar um contrato** (T5) e exige justificativa no PR. No diff, um teste ajustado para passar é indistinguível de um teste corrigido; só a justificativa separa os dois.
+
+Sem enforcement automatizado nesta fase, coerente com o precedente de ADR-0002 (escala de spacing), ADR-0003 (P5/P6) e ADR-0004 (convenções de commit).
+
+### 12.7 Execução
+
+- A suíte é executável por **um comando único**, determinística e **sem acesso à rede** (T6, T11).
+- Sua execução integra os critérios de merge de G7.3 conforme a verificação automatizada se torne disponível (T11). Enquanto não houver CI, a execução depende de disciplina local — limitação registrada nos contras do ADR-0005.
+- **Sem threshold de cobertura**, global ou por diretório (T3).

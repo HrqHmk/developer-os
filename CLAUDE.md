@@ -55,6 +55,16 @@ The workflow is defined by ADR-0004 (`docs/adr/0004-estrategia-de-git-e-branchin
 - A review produced by an agent is input, never approval. Accepting findings and merging are human decisions.
 - Do not perform destructive Git operations without explicit authorization.
 
+## Testing
+
+The strategy is defined by ADR-0005 (`docs/adr/0005-estrategia-de-testes.md`); operational conventions are in `docs/conventions.md` §12.
+
+- Tests are mandatory for `src/content/pipeline/`, `src/content/schemas/`, integration mapping code, and non-obvious branching logic. They are explicitly not required for presentational components or content entries.
+- Every bug fix ships with a test that fails before the fix.
+- Changing an existing assertion changes a contract — justify it in the PR.
+- Do not test dependencies or the framework, and do not duplicate in a test what the build already fails on.
+- The runner is Vitest, not Jest. Testing dependencies are installed on demand, never ahead of the code that requires them.
+
 ## Documentation
 
 Keep documentation synchronized with relevant architectural changes.

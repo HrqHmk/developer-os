@@ -102,9 +102,12 @@ developer-os/
 │   └── integrations/       # Adaptadores de APIs externas e IAs
 │
 ├── public/                 # Ativos estáticos
-├── tests/                  # Testes automatizados (unitários, e2e)
+├── tests/
+│   └── e2e/                # Testes E2E (ver ADR-0005)
 └── README.md
 ```
+
+Testes unitários e de integração ficam **co-locados** com o código que verificam, dentro de `src/`, e não em diretório próprio. `tests/` é reservado ao E2E, que não tem código-fonte correspondente para acompanhar. Ver ADR-0005 e `conventions.md` §12.
 
 A estrutura definitiva dependerá da stack escolhida.
 
@@ -249,10 +252,10 @@ A arquitetura deve evitar inicialmente:
 - Estratégia de estilização/UI: Tailwind CSS + shadcn/ui sobre Base UI (registrado em ADR-0002, status: Aceito). Temas light/dark baseados em design tokens semânticos via CSS variables, conforme `design-system.md`. Componentes não devem utilizar cores hardcoded, salvo exceções justificadas.
 - Formato e armazenamento de conteúdo: arquitetura híbrida por natureza do conteúdo (registrado em ADR-0003, status: Aceito). Markdown puro para prosa, módulos TypeScript declarativos para dados estruturados e componentes isolados para interatividade. Todo conteúdo publicável é descoberto, validado e processado em build, sem processamento de Markdown em runtime. Convenções operacionais em `conventions.md` §8.
 - Estratégia de Git / Branching: fluxo próximo do GitHub Flow, com Issue como unidade de trabalho (registrado em ADR-0004, status: Aceito). `main` única e sempre publicável; nenhuma mudança entra fora de Pull Request; validação humana obrigatória antes do merge. Agentes de IA propõem, não integram. Convenções operacionais em `conventions.md` §11.
+- Estratégia de testes: propriedades duráveis T1–T11 (registrado em ADR-0005, status: Aceito). Verificação em camadas complementares — tipagem e build cobrem estrutura e contrato de dados; testes cobrem comportamento. Obrigatoriedade por área, nunca por percentual de cobertura; pirâmide como direção, não como cota. Ferramentas decididas (Vitest, React Testing Library, Playwright) e instaladas sob demanda. Convenções operacionais em `conventions.md` §12.
 
 ### Pendentes
 
-- [ ] Estratégia de testes
 - [ ] Plataforma de deploy
 - [ ] Analytics
 - [ ] Estratégia para Playground IA
