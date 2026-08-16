@@ -174,15 +174,11 @@ Persistência será introduzida apenas quando houver uma necessidade concreta, c
 
 ## 9. Deploy e Infraestrutura
 
-**A definir.**
+Governado pelo ADR-0006 (`docs/adr/0006-plataforma-de-deploy.md`), status: Aceito.
 
-Objetivos:
+Os objetivos originais desta seção — deploy automatizado, baixo custo, configuração mínima, previews por alteração e possibilidade de rollback — estão expressos como propriedades duráveis D1–D9 naquele ADR.
 
-- deploy automatizado;
-- baixo custo;
-- configuração mínima;
-- previews por alteração;
-- possibilidade de rollback.
+O artefato publicado é **pré-renderizado e servido como ativo estático**. O runtime servidor existe dentro do artefato — a stack não oferece saída sem servidor — mas não é invocado por requisições de conteúdo pré-renderizado. Execução server-side passa a ser utilizada apenas diante de necessidade concreta, sem exigir troca de plataforma.
 
 ---
 
@@ -253,10 +249,10 @@ A arquitetura deve evitar inicialmente:
 - Formato e armazenamento de conteúdo: arquitetura híbrida por natureza do conteúdo (registrado em ADR-0003, status: Aceito). Markdown puro para prosa, módulos TypeScript declarativos para dados estruturados e componentes isolados para interatividade. Todo conteúdo publicável é descoberto, validado e processado em build, sem processamento de Markdown em runtime. Convenções operacionais em `conventions.md` §8.
 - Estratégia de Git / Branching: fluxo próximo do GitHub Flow, com Issue como unidade de trabalho (registrado em ADR-0004, status: Aceito). `main` única e sempre publicável; nenhuma mudança entra fora de Pull Request; validação humana obrigatória antes do merge. Agentes de IA propõem, não integram. Convenções operacionais em `conventions.md` §11.
 - Estratégia de testes: propriedades duráveis T1–T11 (registrado em ADR-0005, status: Aceito). Verificação em camadas complementares — tipagem e build cobrem estrutura e contrato de dados; testes cobrem comportamento. Obrigatoriedade por área, nunca por percentual de cobertura; pirâmide como direção, não como cota. Ferramentas decididas (Vitest, React Testing Library, Playwright) e instaladas sob demanda. Convenções operacionais em `conventions.md` §12.
+- Plataforma e estratégia de deploy: propriedades duráveis D1–D9 (registrado em ADR-0006, status: Aceito). O artefato publicado é pré-renderizado e servido como ativo estático; o runtime servidor existe no artefato, mas não é invocado por requisições de conteúdo pré-renderizado, e execução server-side entra apenas diante de necessidade concreta. Publicação é consequência do merge, com preview por Pull Request e reversão sem rebuild. Cloudflare Workers é a implementação inicial, substituível sem novo ADR. **D9 (segmentação de segredos por ambiente) é pré-condição obrigatória antes da introdução do primeiro segredo** — a implementação inicial não a satisfaz por padrão.
 
 ### Pendentes
 
-- [ ] Plataforma de deploy
 - [ ] Analytics
 - [ ] Estratégia para Playground IA
 - [ ] CI/CD
