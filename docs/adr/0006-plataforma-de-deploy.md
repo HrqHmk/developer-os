@@ -1,7 +1,7 @@
 # ADR-0006 — Plataforma e Estratégia de Deploy
 
 ## Status
-Proposto
+Aceito
 
 ## Contexto
 
