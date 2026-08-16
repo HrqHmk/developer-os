@@ -174,15 +174,11 @@ Persistência será introduzida apenas quando houver uma necessidade concreta, c
 
 ## 9. Deploy e Infraestrutura
 
-**A definir.**
+Governado pelo ADR-0006 (`docs/adr/0006-plataforma-de-deploy.md`), em status **Proposto**.
 
-Objetivos:
+Os objetivos originais desta seção — deploy automatizado, baixo custo, configuração mínima, previews por alteração e possibilidade de rollback — estão expressos como propriedades duráveis D1–D9 naquele ADR.
 
-- deploy automatizado;
-- baixo custo;
-- configuração mínima;
-- previews por alteração;
-- possibilidade de rollback.
+O artefato publicado é **pré-renderizado e servido como ativo estático**. O runtime servidor existe dentro do artefato — a stack não oferece saída sem servidor — mas não é invocado por requisições de conteúdo pré-renderizado. Execução server-side passa a ser utilizada apenas diante de necessidade concreta, sem exigir troca de plataforma.
 
 ---
 
@@ -256,7 +252,7 @@ A arquitetura deve evitar inicialmente:
 
 ### Pendentes
 
-- [ ] Plataforma de deploy
+- [ ] Plataforma de deploy — decisão registrada em ADR-0006, **status: Proposto**. Move para *Definidas* quando o ADR for aceito.
 - [ ] Analytics
 - [ ] Estratégia para Playground IA
 - [ ] CI/CD
