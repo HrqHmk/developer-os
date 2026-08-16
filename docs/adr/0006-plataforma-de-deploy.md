@@ -45,25 +45,41 @@ Estas propriedades são a decisão. Qualquer implementação — atual ou futura
 
 #### Publicação
 
-- **D1 — O que está em produção é derivável do repositório.** Todo artefato publicado corresponde a um commit identificável e é reproduzível a partir de repositório e lockfile, sem passo manual e sem estado acumulado no ambiente. Deriva de P1 e P2 (conteúdo versionado, processado em build) e de `conventions.md` §2 (lockfile como referência).
+- **D1 — O que está em produção é derivável de um conjunto identificável e controlado de entradas de build.** Todo artefato publicado corresponde a um commit identificável e é reproduzível a partir desse conjunto, sem passo manual e sem estado acumulado no ambiente.
+
+  O conjunto inclui, conforme aplicável: o commit; o lockfile; a configuração versionada; a versão e o runtime de build; e a identidade ou versão das configurações externas que influenciem o artefato. **Segredos não são versionados no repositório** (D9).
+
+  A precisão importa porque "repositório e lockfile" seria insuficiente: o prerender do TanStack Start roda em build e pode ler variáveis de ambiente e bindings, de modo que entradas fora do repositório influenciam o artefato produzido. **Como essas entradas são registradas e fornecidas é decisão do ADR de CI/CD**; esta propriedade exige apenas que sejam identificáveis e controladas.
+
+  Deriva de P1 e P2 (conteúdo versionado, processado em build) e de `conventions.md` §2 (lockfile como referência).
 
 - **D2 — Publicar é consequência do merge, não uma ação à parte.** Não existe caminho normal de publicação que passe por fora de `main` (G2). Deploy manual é procedimento de exceção, não fluxo.
 
 #### Observabilidade da mudança
 
-- **D3 — Toda mudança candidata é observável em ambiente próprio antes do merge.** Preview por Pull Request, com URL estável, isolada e produzida pelo mesmo processo de build da produção. Preenche o slot vazio de ADR-0004 §2, dá substância à leitura humana de G3 nas mudanças visuais que o ADR-0005 T8 declara explicitamente não cobrir, e fornece o alvo que o E2E de T9 exigirá.
+- **D3 — Toda mudança candidata é observável em ambiente próprio antes do merge.** Cada Pull Request possui **artefato e URL de preview próprios**, estáveis e produzidos pelo mesmo processo de build da produção.
 
-- **D4 — É sempre possível saber qual commit está publicado e por que um deploy falhou.** Piso de observabilidade. Analytics de audiência é decisão separada, pendente em `architecture.md` §12.
+  O escopo de "próprio" é deliberadamente restrito a artefato e endereço. **Isolamento de credenciais, bindings e recursos externos é governado por D9**, não por esta propriedade — separar as duas evita que D3 pareça garantir algo que ela não garante.
+
+  Preenche o slot vazio de ADR-0004 §2, dá substância à leitura humana de G3 nas mudanças visuais que o ADR-0005 T8 declara explicitamente não cobrir, e fornece o alvo que o E2E de T9 exigirá.
+
+- **D4 — Existe rastreabilidade verificável entre deployment, commit e resultado do build.** Para qualquer deployment é possível identificar o commit correspondente e o resultado do build que o produziu; quando o build ou o deploy não conclui, a evidência disponível da falha é acessível.
+
+  A propriedade é de **rastreabilidade**, não de retenção perpétua: a política concreta de retenção de logs e de histórico pertence à implementação e ao ADR de CI/CD, e varia por provedor e por plano. Analytics de audiência é decisão separada, pendente em `architecture.md` §12.
 
 #### Reversibilidade
 
-- **D5 — Reverter é operação de minutos e não depende de rebuild nem de reescrever histórico.** A reversão repontar para um artefato anterior conhecido. `git revert` continua sendo o caminho para corrigir a causa — não o mecanismo de emergência.
+- **D5 — Reverter é operação de minutos e não depende de rebuild nem de reescrever histórico.** A reversão reponta para um artefato anterior conhecido. `git revert` continua sendo o caminho para corrigir a causa — não o mecanismo de emergência.
 
 #### Fronteira com o provedor
 
-- **D6 — Acoplamento ao provedor vive na fronteira de configuração, nunca em `src/`.** Nenhuma API proprietária de plataforma dentro do código da aplicação. Espelha `architecture.md` §6 ("integrações devem permanecer isoladas da lógica principal") e é o que torna todas as demais propriedades reversíveis: adaptar a outro provedor deve ser troca de plugin, variáveis e DNS, não reescrita.
+- **D6 — Acoplamento ao provedor vive na fronteira de configuração, nunca em `src/`.** Nenhuma API proprietária de plataforma dentro do código da aplicação. Espelha `architecture.md` §6 ("integrações devem permanecer isoladas da lógica principal").
 
-- **D7 — Execução server-side é capacidade disponível, não premissa ligada.** Habilitar server functions no futuro não pode exigir troca de provedor nem redesenho da estratégia de deploy. Formaliza o que o ADR-0001 já prometeu: começar estático e ligar recursos dinâmicos apenas quando o Playground IA exigir.
+  O objetivo arquitetural é **concentrar o acoplamento na fronteira de configuração e minimizar a mudança no código da aplicação durante uma migração**. Não é promessa de que uma migração se limite a plugin, variáveis e DNS: diferenças de runtime, de bindings, de gestão de segredos, de semântica de cache e de serviços externos podem exigir trabalho adicional. D6 reduz a superfície dessa migração; não a elimina.
+
+- **D7 — Execução server-side é capacidade disponível, não premissa ligada.** Habilitar server functions no futuro não pode exigir troca de provedor nem redesenho da estratégia de deploy. Formaliza o que o ADR-0001 já prometeu, na formulação que o levantamento tornou precisa: **começar com conteúdo pré-renderizado servido como ativo estático e utilizar execução server-side apenas quando surgir necessidade concreta.**
+
+  A distinção é a de §2: **não evitamos ter runtime; evitamos utilizá-lo antes de precisar.**
 
 #### Custo e segurança
 
@@ -73,7 +89,7 @@ Estas propriedades são a decisão. Qualquer implementação — atual ou futura
 
 - **D9 — Segredos vivem na plataforma, segmentados por ambiente.** Nada de credencial no repositório; preview nunca usa credencial de produção.
 
-  **Esta propriedade ainda não é exercida**: o projeto não possui segredo algum. Ela passa a valer no momento em que existir o primeiro — provavelmente uma chave de provedor de IA no Playground —, e a implementação inicial **não a satisfaz por padrão** (ver §4).
+  A propriedade vale desde já, mas **ainda não é exercida**: o projeto não possui segredo algum, e por isso ela é hoje satisfeita de forma vacuamente verdadeira. Ela se torna **pré-condição obrigatória antes da introdução do primeiro segredo** — provavelmente uma chave de provedor de IA no Playground. A implementação inicial **não a satisfaz por padrão** (§3 e §4).
 
 ### 2. Forma do artefato publicado
 
@@ -85,9 +101,13 @@ A precisão da redação importa. A alternativa considerada era ligar o runtime 
 
 ### 3. Implementação inicial
 
-A implementação abaixo é a escolha inicial para satisfazer D1–D9. Ela é **substituível**: trocar o provedor, mantendo as propriedades, não exige novo ADR.
+A implementação abaixo é a escolha inicial para satisfazer **as propriedades aplicáveis ao estágio atual do projeto**. Ela é **substituível**: trocar o provedor, mantendo as propriedades, não exige novo ADR.
 
 **Cloudflare Workers**, com prerender do TanStack Start servido por Workers Static Assets.
+
+Uma ressalva é parte da decisão, e não uma nota de rodapé: **a implementação inicial não satisfaz D9 por padrão.** Hoje isso não produz risco, porque o projeto não possui segredo algum — D9 é vacuamente satisfeita. **D9 torna-se uma pré-condição obrigatória antes da introdução do primeiro segredo**, e nenhum segredo pode alcançar um preview antes que a segmentação exista.
+
+O mecanismo concreto — Worker separado para previews, Wrangler Environment, ou outra forma — **não é escolhido aqui**. Será decidido quando o gatilho ocorrer, contra o único critério que importa: satisfazer D9 antes de qualquer segredo alcançar um preview. Escolher agora seria montar infraestrutura para necessidade que ainda não existe, contra `architecture.md` §11.
 
 Três argumentos sustentam a escolha, e todos são consequência das propriedades, não de preferência:
 
@@ -103,7 +123,11 @@ Convenções operacionais — configuração do `wrangler.jsonc`, tratamento de 
 
 Registrados para não serem redescobertos como surpresa. Nenhum altera a decisão.
 
-- **A lacuna de D9.** No Cloudflare, uma versão do Worker é um snapshot que inclui bindings e secrets, e a versão de preview pertence ao mesmo Worker. **Uma preview de PR carrega, por padrão, os segredos de produção** — e preview de PR é superfície pública. Netlify e Vercel resolvem isso nativamente por contexto de deploy; Cloudflare exige montagem deliberada, com Worker ou environment separado para previews. Hoje o risco é nulo porque não há segredos. A mitigação é obrigatória **antes** da introdução do primeiro segredo, e está registrada como gatilho 3.
+- **A lacuna de D9.** No Cloudflare, uma versão do Worker é um snapshot que inclui bindings e secrets, e a versão de preview pertence ao mesmo Worker. **Uma preview de PR carrega, por padrão, os segredos de produção** — e preview de PR é superfície pública. Netlify e Vercel resolvem isso nativamente por contexto de deploy; Cloudflare exige montagem deliberada, para a qual existe mais de um caminho possível (Worker separado, Wrangler Environment, entre outros). **Este ADR não escolhe entre eles**, conforme §3.
+
+  Hoje o risco é nulo porque não há segredos. A mitigação é **pré-condição** para a introdução do primeiro segredo, não consequência dela, e está registrada como gatilho 3.
+
+  Vale notar o recorte: **isto não é uma falha de D3.** Cada preview tem artefato e URL próprios, que é o que D3 exige. O que falta é a segmentação de credenciais, que é escopo de D9.
 
 - **ISR e cache por header não funcionam no Cloudflare.** Workers rodam à frente do CDN, de modo que headers de cache não alcançam a camada de CDN sem uso direto da Cache API. O ADR-0001 já registrou a ausência de ISR nesta stack e a forma do artefato definida em §2 não depende de cache de resposta dinâmica — mas o limite é real e é maior que o do ADR-0001: não é só que o framework não oferece ISR, é que este provedor não o suportaria.
 
@@ -130,17 +154,17 @@ Registrados para não serem redescobertos como surpresa. Nenhum altera a decisã
 ### Prós
 
 - **Preenche o slot vazio do ADR-0004 §2 e dá alvo ao ADR-0005 T9.** D3 converte "preview da alteração (quando existir)" em garantia, e transforma `main` "sempre publicável" (G1) de afirmação em fato observável.
-- **Fecha a lacuna de deploy sem antecipar o ADR de CI/CD.** As propriedades são neutras quanto a pipeline, e D1 fixa a única fronteira que os dois ADRs compartilham: o deploy consome artefato reproduzível; onde ele é produzido é decisão do outro.
+- **Fecha a lacuna de deploy sem antecipar o ADR de CI/CD.** As propriedades são neutras quanto a pipeline, e D1 fixa a fronteira entre os dois ADRs: este exige que as entradas de build sejam identificáveis e controladas; **como elas são registradas e fornecidas, e onde o build é executado, são decisões do outro.** D4 aplica o mesmo corte à retenção de logs.
 - **O custo operacional é estruturalmente zero, não apenas baixo.** Requisições de conteúdo são requisições a ativos estáticos: gratuitas, ilimitadas e fora do orçamento de invocações. Atende diretamente ao objetivo de baixo custo de `architecture.md` §1.
 - **D8 na redação de "parar em vez de faturar" é satisfazível de fato**, e não uma promessa que depende de recurso pago.
-- **A decisão sobrevive à troca de provedor.** As garantias estão em D1–D9, não em Cloudflare. Migrar é trocar plugin de Vite, variáveis e DNS — mesmo corte que ADR-0003 aplicou entre P1–P9 e `unified`, e ADR-0005 entre T1–T11 e Vitest.
+- **A decisão sobrevive à troca de provedor.** As garantias estão em D1–D9, não em Cloudflare, e uma alternativa é avaliável contra critérios já escritos — mesmo corte que ADR-0003 aplicou entre P1–P9 e `unified`, e ADR-0005 entre T1–T11 e Vitest. D6 mantém o grosso da migração na fronteira de configuração; o que ela não faz é reduzir toda migração a plugin, variáveis e DNS.
 - **D7 é satisfeita por construção, sem infraestrutura antecipada.** O caminho para o Playground IA fica aberto sem que nada seja montado para ele hoje.
 - **Não gera confiança falsa.** §4 declara a lacuna de D9 e os limites do provedor em vez de deixá-los implícitos, no mesmo espírito do ADR-0005 T8.
 
 ### Contras e riscos
 
 - **A implementação inicial não satisfaz D9 por padrão.** É o contra mais relevante desta decisão: a propriedade existe, é vacuamente satisfeita hoje, e a plataforma escolhida é a pior das três avaliadas nesse ponto. O risco só se materializa com o primeiro segredo, mas materializa-se como exposição pública de credencial.
-- **A escolha é reversível em tese e menos em prática, sem domínio próprio.** D6 mantém o código portável, mas URLs publicadas em domínio do provedor acumulam identidade que a migração perderia. Mantido fora do escopo por decisão explícita, e portanto é risco assumido.
+- **A escolha é reversível em tese e menos em prática, sem domínio próprio.** D6 mantém pequena a superfície de migração no código, mas URLs publicadas em domínio do provedor acumulam identidade que a migração perderia. Mantido fora do escopo por decisão explícita, e portanto é risco assumido.
 - **`workerd` restringe o universo de dependências server-side** justamente na área — integrações de IA — em que o projeto tem menos visibilidade sobre o que vai precisar.
 - **O provedor exerce atração para os próprios primitivos de persistência**, que é o caminho mais provável de erosão de D6 e de decisão implícita sobre `architecture.md` §8.
 - **A DX de preview é um degrau abaixo da alternativa mais forte.** Vercel oferece o melhor fluxo de preview das três; abrir mão disso é custo real de ergonomia, aceito em troca de D2, D5 e D8.
@@ -164,7 +188,7 @@ Reavaliação gera **novo ADR**. Este documento não é reescrito para alterar a
 
 ## Alternativas consideradas
 
-- **Vercel** — **principal alternativa**, e a melhor das três em ergonomia de preview e integração com GitHub. Descartada por quatro fatos somados, nenhum deles de capacidade: no Hobby, o rollback alcança **apenas o deployment imediatamente anterior**, contra D5; runtime logs são retidos por **1 hora**, tensionando D4; **Spend Management é recurso Pro**, de modo que a propriedade D8 depende de plano pago para existir como controle; e a cláusula de uso não comercial cria **acoplamento condicional entre plataforma e produto** — doação, patrocínio ou anúncio converteria a escolha gratuita em plano pago. Esse último ponto é o decisivo: não é a hipótese de monetização que incomoda, é infraestrutura cuja elegibilidade depende de decisões editoriais futuras, exatamente o tipo de dependência oculta que D6 existe para evitar. Registra-se ainda que Vercel **não é parceiro oficial** na documentação do TanStack Start, e que seus diferenciais mais fortes — ISR e otimização de imagem — são precisamente os recursos que o ADR-0001 registrou como ausentes nesta stack. **Seria a recomendação caso o projeto já estivesse em plano Pro por outro motivo.**
+- **Vercel** — **principal alternativa**, e a melhor das três em ergonomia de preview e integração com GitHub. Descartada por três fatos somados, nenhum deles de capacidade: no Hobby, o rollback alcança **apenas o deployment imediatamente anterior**, contra D5; **Spend Management é recurso Pro**, de modo que a propriedade D8 depende de plano pago para existir como controle; e a cláusula de uso não comercial cria **acoplamento condicional entre plataforma e produto** — doação, patrocínio ou anúncio converteria a escolha gratuita em plano pago. Esse último ponto é o decisivo: não é a hipótese de monetização que incomoda, é infraestrutura cuja elegibilidade depende de decisões editoriais futuras, exatamente o tipo de dependência oculta que D6 existe para evitar. Registra-se ainda que Vercel **não é parceiro oficial** na documentação do TanStack Start, e que seus diferenciais mais fortes — ISR e otimização de imagem — são precisamente os recursos que o ADR-0001 registrou como ausentes nesta stack. A retenção de runtime logs por **1 hora** no Hobby é limitação operacional real, mas **não é violação de D4**: build logs são retidos indefinidamente, e D4 exige rastreabilidade, não retenção perpétua. **Seria a recomendação caso o projeto já estivesse em plano Pro por outro motivo.**
 - **Netlify** — a mais forte das três em D9, com escopo nativo por deploy context, e com o melhor esquema de URLs de preview (estável por PR mais permalink imutável). Descartada por colisão estrutural com **D2**: no modelo de créditos, cada deploy de produção consome 15 dos 300 créditos mensais do plano Free, o que estabelece um teto de aproximadamente **20 deploys de produção por mês antes de qualquer tráfego**. Como o ADR-0004 G2 roteia toda mudança por merge, uma correção de typo consome o mesmo orçamento que uma feature — o fluxo obrigatório do projeto consumiria o plano. O plano pago resolve, mas cobra mensalmente por algo que a alternativa escolhida entrega sem custo. Secundariamente, o teto de **60s em streaming** é o mais apertado dos três para um eventual Playground.
 - **GitHub Pages** — custo zero, complexidade mínima e nenhuma conta adicional. Descartada por falhar **D3** (não há preview por PR nativo) e **D7** (ausência total de runtime servidor obrigaria uma segunda plataforma para o Playground, reintroduzindo a arquitetura híbrida que o ADR-0001 já descartou e contrariando a preferência por aplicação única de `architecture.md` §3).
 - **VPS ou container gerenciado** (Railway, Fly, Coolify e similares) — controle total do runtime, sem restrição de compatibilidade e sem limite de duração. Descartada por custo operacional e por contrariar `architecture.md` §1 e §11: introduz responsabilidade de infraestrutura sem requisito que a justifique, e nenhuma propriedade de D1–D9 pede por ela.
