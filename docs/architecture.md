@@ -251,8 +251,9 @@ A arquitetura deve evitar inicialmente:
 - Estratégia de testes: propriedades duráveis T1–T11 (registrado em ADR-0005, status: Aceito). Verificação em camadas complementares — tipagem e build cobrem estrutura e contrato de dados; testes cobrem comportamento. Obrigatoriedade por área, nunca por percentual de cobertura; pirâmide como direção, não como cota. Ferramentas decididas (Vitest, React Testing Library, Playwright) e instaladas sob demanda. Convenções operacionais em `conventions.md` §12.
 - Plataforma e estratégia de deploy: propriedades duráveis D1–D9 (registrado em ADR-0006, status: Aceito). O artefato publicado é pré-renderizado e servido como ativo estático; o runtime servidor existe no artefato, mas não é invocado por requisições de conteúdo pré-renderizado, e execução server-side entra apenas diante de necessidade concreta. Publicação é consequência do merge, com preview por Pull Request e reversão sem rebuild. Cloudflare Workers é a implementação inicial, substituível sem novo ADR. **D9 (segmentação de segredos por ambiente) é pré-condição obrigatória antes da introdução do primeiro segredo** — a implementação inicial não a satisfaz por padrão.
 
+- Estratégia de analytics: propriedades duráveis A1–A9 (registrado em ADR-0007, status: Aceito). Coleta cookieless e agregada, sem identificador persistente e sem persistir IP ou User-Agent; medir não invoca o runtime servidor, preservando a forma do artefato definida em ADR-0006 §2. O conhecimento do fornecedor é confinado a uma única fronteira, e analytics nunca é dependência funcional da aplicação — removê-la ou torná-la no-op não altera o comportamento. GoatCounter é a implementação inicial, substituível sem novo ADR; Umami Cloud é candidato condicional. **Nada é instalado antes do gatilho de A9** (conteúdo publicado e distribuição externa), e **A6 (ausência de cobrança automática ou variável) é revalidada na instalação e a cada troca de fornecedor ou plano**. Os números são direcionais, não exatos (A8).
+
 ### Pendentes
 
-- [ ] Analytics
 - [ ] Estratégia para Playground IA
 - [ ] CI/CD
