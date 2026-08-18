@@ -56,7 +56,7 @@ Verificado em documentação oficial dos fornecedores, exceto onde marcado como 
 
 ## Decisão
 
-Adotar uma estratégia de analytics definida por **propriedades duráveis**, com **coleta cookieless e agregada em ponto único de injeção**, **instalação condicionada a gatilho** e **GoatCounter como implementação inicial substituível**.
+Adotar uma estratégia de analytics definida por **propriedades duráveis**, com **coleta cookieless e agregada, confinada a uma única fronteira de fornecedor**, **instalação condicionada a gatilho** e **GoatCounter como implementação inicial substituível**.
 
 ### 1. Propriedades duráveis
 
@@ -64,13 +64,15 @@ Estas propriedades são a decisão. Qualquer implementação — atual ou futura
 
 #### Privacidade
 
-- **A1 — Nenhum dado pessoal e nenhum identificador persistente.** Sem cookie, sem `localStorage` ou `sessionStorage` de identidade, sem fingerprinting, sem rastreamento cross-site. IP e User-Agent não são armazenados.
+- **A1 — Nenhum identificador persistente, e nenhum dado pessoal armazenado.** Sem cookie, sem `localStorage` ou `sessionStorage` de identidade, sem fingerprinting, sem rastreamento cross-site. **Endereço IP e User-Agent não são persistidos** — nem em forma derivada que funcione como identificador estável — e nenhum perfil individual é mantido.
 
-  A ausência de banner de consentimento é **objetivo de projeto, não efeito colateral**. Um banner introduziria componente de UI, estado de consentimento, gate de carregamento e uma funcionalidade inteira no roadmap — custo desproporcional ao valor do propósito editorial, e contra a preferência por simplicidade de `vision.md`.
+  A propriedade é sobre **persistência, não sobre processamento**, e a distinção é deliberada. Toda coleta client-side avaliada, inclusive a implementação inicial, processa IP e User-Agent transitoriamente no momento da requisição: é assim que se distingue uma visita de um pageview sem usar cookie. Escrever A1 como "nenhum dado pessoal" produziria uma propriedade **literalmente incompatível com qualquer implementação possível**, inclusive com a que este ADR escolhe — e uma propriedade durável que nasce inviolável apenas no papel não é garantia, é enfeite. O que A1 exige é verificável: que esse processamento seja transitório, limitado à formação do agregado, e que nada dele sobreviva no armazenamento.
 
-- **A2 — Somente agregado.** Nenhum visitante individual é reconstruível. Sem jornada por usuário, sem session replay, sem registro de pageview individual.
+  **A ausência de banner de consentimento é objetivo de projeto, não conclusão jurídica desta decisão.** Um banner introduziria componente de UI, estado de consentimento, gate de carregamento e uma funcionalidade inteira no roadmap — custo desproporcional ao valor do propósito editorial, e contra a preferência por simplicidade de `vision.md`. A1 existe para que a coleta escolhida seja do tipo que **torna plausível dispensá-lo**. Se ele é de fato dispensável depende da configuração efetivamente adotada e do regime aplicável — LGPD, e GDPR quando houver leitores na União Europeia —, e essa é avaliação jurídica e humana, não garantia arquitetural. O próprio fornecedor escolhido acompanha a afirmação de uma ressalva (*"the GDPR is fairly new, and lacks case law to clarify what exactly counts as identifiable personal data"*), e um ADR não deve afirmar com mais certeza do que a fonte que cita.
 
-  A propriedade não é redundante com A1, e a distinção tem consequência prática: **A1 governa o que entra; A2 governa o que o produto permite reconstruir.** Existem ferramentas cookieless que ainda assim oferecem trilha por sessão — o próprio GoatCounter permite, opcionalmente, gravar pageviews individuais. **A2 proíbe habilitar esse modo.**
+- **A2 — Somente agregado.** Nenhum visitante individual é reconstruível **a partir do que é armazenado**. Sem jornada por usuário, sem session replay, sem registro de pageview individual.
+
+  A propriedade não é redundante com A1, e a distinção tem consequência prática: **A1 governa o que sobrevive à coleta; A2 governa o que o produto permite reconstruir a partir disso.** Existem ferramentas cookieless que ainda assim oferecem trilha por sessão — o próprio GoatCounter permite, opcionalmente, gravar pageviews individuais, o que transformaria a sessão transitória tolerada por A1 em trilha persistida. **A2 proíbe habilitar esse modo.**
 
 #### Arquitetura
 
@@ -78,13 +80,17 @@ Estas propriedades são a decisão. Qualquer implementação — atual ou futura
 
   A mordida concreta é específica e vale registrá-la: **A3 proíbe o proxy first-party do beacon**, que é a técnica usual para escapar de bloqueadores. O trade-off é recusado aqui e assumido em A8.
 
-- **A4 — O acoplamento é confinado a um ponto único e é unidirecional.**
+- **A4 — O acoplamento ao fornecedor é confinado a uma única fronteira e é unidirecional.**
 
-  *Confinado:* existe **um** ponto de injeção, no documento raiz. Nenhuma chamada de analytics em componente, rota, loader ou lógica de domínio. Remover analytics é deletar esse ponto. Isso vale inclusive para eventos customizados, caso venham a existir — eles não autorizam espalhar chamadas de rastreamento pela aplicação.
+  *Confinado:* **o conhecimento do fornecedor vive em uma única fronteira.** Nenhum componente, rota, loader ou lógica de domínio nomeia o fornecedor, importa seu SDK ou depende do formato da sua API. Remover analytics é deletar essa fronteira.
+
+  Hoje, sem eventos, a fronteira é literalmente **um ponto de injeção no documento raiz**, e nenhum adaptador é criado — não existe uso que o justifique, e criá-lo agora seria a abstração antecipada que `conventions.md` §7 e `architecture.md` §11 recusam. Caso eventos passem a existir, a fronteira pode assumir a forma de um **adaptador em `src/integrations/`**, e a emissão do evento passa a ser permitida no ponto onde a interação acontece. O que a propriedade continua proibindo é que esse ponto conheça o fornecedor: um componente do Playground emite um evento no vocabulário do domínio, e quem traduz isso em chamada de GoatCounter, Umami ou qualquer outro é a fronteira, e só ela.
+
+  A separação entre as duas coisas é o que mantém a propriedade aplicável. Exigir um **único local físico de instrumentação** tornaria a instrumentação do Playground artificialmente impossível, porque um evento de interação só pode ser emitido onde a interação ocorre. **O alvo de A4 é impedir que o fornecedor se espalhe pela aplicação, não impedir que a aplicação expresse eventos próprios.**
 
   *Unidirecional:* **a aplicação nunca lê dados de analytics.** Nada em `src/` consome a API do fornecedor, em build ou em runtime. Isso barra o vetor concreto de erosão neste projeto: um bloco de "posts mais lidos" transformaria um serviço externo em dependência de renderização, contra `architecture.md` §6 e contra a forma do artefato de ADR-0006 §2.
 
-  **A4 não é D6 e não afirma satisfazê-la.** D6 governa a plataforma de deploy e exige acoplamento fora de `src/`; sem domínio próprio, analytics necessariamente coloca uma linha nomeando o fornecedor dentro de `src/`. A4 é a propriedade análoga com a garantia que é de fato alcançável — superfície mínima, localizada e reversível. Declarar a diferença é preferível a afirmar uma conformidade falsa, no mesmo espírito do ADR-0006 §4.
+  **A4 não é D6 e não afirma satisfazê-la.** D6 governa a plataforma de deploy e exige acoplamento fora de `src/`; sem domínio próprio, analytics necessariamente coloca uma linha nomeando o fornecedor dentro de `src/` (ver gatilho 5). A4 é a propriedade análoga com a garantia que é de fato alcançável — superfície mínima, localizada e reversível. Declarar a diferença é preferível a afirmar uma conformidade falsa, no mesmo espírito do ADR-0006 §4.
 
 - **A5 — Falha de analytics é invisível e nunca bloqueia render.** Carregamento assíncrono, sem impacto em layout e sem bloqueio de renderização. A página é integralmente funcional com o script bloqueado, fora do ar ou removido.
 
@@ -104,9 +110,17 @@ Estas propriedades são a decisão. Qualquer implementação — atual ou futura
 
   A formulação é deliberada: **a propriedade governa o que instrumentamos, não os campos que a ferramenta coleta por padrão.** Todo candidato avaliado coleta país, navegador, sistema operacional e largura de tela sem opção prática de desligar; escrever A7 como "nada além do conjunto mínimo é coletado" produziria uma propriedade violada no primeiro dia. O que ela proíbe é **adicionar** coleta por precaução.
 
-- **A8 — Os números são direcionais, não exatos.** A medição client-side subconta na ordem de **um terço**, e provavelmente mais neste projeto. Decisão baseada em analytics é decisão sobre **proporção entre páginas**, nunca sobre volume absoluto e nunca sobre variação pequena.
+  O `referrer` não está no conjunto mínimo apenas para responder "por onde os leitores chegam". Ele é também a **variável de controle que torna a comparação de A8 legível**: sem conhecer o canal, não há como saber se duas páginas são sequer comparáveis entre si.
 
-  A propriedade existe pelo mesmo motivo que T8 no ADR-0005: **impedir que o instrumento produza confiança que ele não sustenta.**
+- **A8 — Os números são direcionais, não exatos, e a subcontagem não é uniforme.** A medição client-side subconta na ordem de **um terço**, e provavelmente mais neste projeto. Mais relevante que a magnitude: **a taxa de bloqueio varia com o público e com o canal de distribuição**, de modo que o erro não se cancela na comparação.
+
+  Disso decorre a régua de uso, conservadora de propósito:
+
+  - Analytics serve para **tendências amplas** — nunca para volume absoluto, nunca para variação pequena.
+  - **Comparação entre conteúdos só é confiável quando audiência e canal de distribuição são razoavelmente comparáveis.** Confrontar um artigo divulgado em agregador técnico com outro divulgado em rede social confronta também as taxas de bloqueio dos dois públicos, e a diferença observada pode ser inteiramente artefato de medição.
+  - Quando houver outro sinal disponível — menções, respostas, tráfego de referência conhecido —, ele **triangula** o dado de analytics em vez de ser substituído por ele.
+
+  A propriedade existe pelo mesmo motivo que T8 no ADR-0005: **impedir que o instrumento produza confiança que ele não sustenta.** Uma decisão editorial tomada sobre diferença pequena entre páginas de públicos distintos é precisamente o erro que A8 existe para prevenir.
 
 #### Momento
 
@@ -116,7 +130,9 @@ Estas propriedades são a decisão. Qualquer implementação — atual ou futura
 
 ### 2. Efeito sobre a régua de testes
 
-Esta decisão **não cria obrigação nova de teste**. A4 mantém analytics como ponto único de injeção, que o ADR-0005 T3 classifica explicitamente como "wrapper fino sobre biblioteca" — não obrigatório. Se eventuais eventos customizados vierem acompanhados de lógica de decisão própria, T3 volta a se aplicar por conta própria, sem que este ADR precise dizê-lo.
+Esta decisão **não cria obrigação nova de teste hoje**. Enquanto a fronteira de A4 for apenas o ponto de injeção no documento raiz, ela é o que o ADR-0005 T3 classifica explicitamente como "wrapper fino sobre biblioteca" — não obrigatório.
+
+Isso muda por conta própria se a fronteira assumir a forma de adaptador: **traduzir evento de domínio em payload de fornecedor é mapeamento de integração**, item 3 da lista de obrigatoriedade de T3, e passa a exigir teste sem que este ADR precise autorizá-lo. Registrar a transição aqui evita que ela seja lida como área cinzenta quando ocorrer.
 
 ### 3. Implementação inicial
 
@@ -127,7 +143,7 @@ A implementação abaixo é a escolha inicial para satisfazer A1–A9. Ela é **
 Três argumentos sustentam a escolha, e todos são consequência das propriedades, não de preferência:
 
 - **A6 por construção.** Não existe relação de cobrança a ser acionada. Nos demais candidatos gratuitos, A6 depende de confiar no comportamento de um teto; aqui ela é satisfeita porque não há mecanismo de faturamento envolvido.
-- **A1 no ponto mais forte disponível.** É o único candidato que não armazena IP nem User-Agent em forma alguma, com sessão mantida em memória por até 8 horas e nunca persistida. Isso evita por completo a discussão sobre IP hasheado como dado pessoal — e privacidade é o critério declarado de maior peso nesta decisão.
+- **A1 no ponto mais forte disponível.** É o único candidato que **não persiste nada derivado de IP ou User-Agent**: o mapeamento de sessão vive em memória por até 8 horas e nunca chega ao armazenamento. O Umami, em contraste, armazena um valor derivado de IP hasheado, o que reabre a discussão — sem consenso jurídico — sobre IP hasheado como dado pessoal. É aqui que os candidatos efetivamente se separam, e privacidade é o critério declarado de maior peso nesta decisão.
 - **A8 já é a postura do fornecedor.** É o único que publica a própria estimativa de subcontagem em vez de sugerir precisão. Um instrumento que declara o próprio erro é o instrumento coerente com a propriedade.
 
 Como consequência de A2, o registro opcional de pageviews individuais **permanece desligado**.
@@ -142,7 +158,7 @@ Convenções operacionais — onde exatamente o snippet é inserido no documento
 
 Registrados para não serem redescobertos como surpresa. Nenhum altera a decisão.
 
-- **A implementação inicial não satisfaz D6**, e nenhuma alternativa avaliada satisfaria. Sem domínio próprio proxied, o snippet nomeando o fornecedor vive no documento raiz, dentro de `src/`. A4 limita a superfície a uma linha; não a elimina.
+- **A implementação inicial não satisfaz D6**, e nenhuma alternativa avaliada satisfaria. Sem domínio próprio proxied, o snippet nomeando o fornecedor vive no documento raiz, dentro de `src/`. A4 limita a superfície a uma linha; não a elimina. O **gatilho 5** descreve a única condição conhecida que fecharia essa lacuna.
 
 - **O limite do plano gratuito é qualitativo, não numérico.** *"Reasonable public usage"* não é verificável de antemão, e o número de 100.000 pageviews/mês circulante em fontes secundárias não foi confirmado oficialmente. Na prática o risco é baixo — a Fase 1 do roadmap não produz volume próximo disso —, mas a incerteza é real e assumida.
 
@@ -168,7 +184,7 @@ Registrados para não serem redescobertos como surpresa. Nenhum altera a decisã
 ### Prós
 
 - **Fecha a pendência sem instalar nada.** A decisão existe antes do primeiro artigo, e nenhuma infraestrutura é montada para necessidade que ainda não ocorreu.
-- **Elimina uma funcionalidade inteira do roadmap.** A1 torna o banner de consentimento desnecessário por construção, e com ele somem componente de UI, estado de consentimento e gate de carregamento.
+- **Mantém fora do roadmap uma funcionalidade inteira.** A coleta exigida por A1 é do tipo que torna plausível dispensar o banner de consentimento — e com ele, componente de UI, estado de consentimento e gate de carregamento. O ADR não afirma que o banner é juridicamente dispensável; afirma que a decisão foi tomada para **não depender dele**.
 - **Custo estruturalmente zero, com A6 satisfeita por construção** e não por confiança no comportamento de um teto.
 - **Preserva a forma do artefato de ADR-0006 §2.** A3 mantém requisição de conteúdo como requisição a ativo estático, e recusa explicitamente o único contorno que a quebraria.
 - **Não gera confiança falsa.** A8 fixa a leitura correta dos números antes que exista o primeiro número, e A4 declara não satisfazer D6 em vez de sugerir conformidade.
@@ -180,7 +196,9 @@ Registrados para não serem redescobertos como surpresa. Nenhum altera a decisã
 - **A implementação inicial não satisfaz D6**, e nenhuma alternativa satisfaria sem domínio próprio. É o contra estrutural desta decisão.
 - **O limite gratuito é qualitativo e a cláusula comercial é condicional**, exatamente a forma de dependência que o ADR-0006 rejeitou na Vercel. Aqui o custo de saída é baixo, mas o formato é o mesmo, e reconhecê-lo é parte da decisão.
 - **Continuidade depende de uma pessoa e de doações.** É o risco mais provável de se materializar entre todos os registrados.
-- **Um terço dos dados não existe.** A estratégia aceita medir mal de propósito, em troca de privacidade e da arquitetura estática. Se em algum momento uma decisão real exigir precisão, esta decisão não a fornece — e o gatilho 4 é o caminho, não um contorno silencioso.
+- **Dado pessoal é processado, ainda que não armazenado.** A1 é propriedade sobre persistência e não elimina o processamento transitório de IP e User-Agent, inerente a qualquer coleta client-side sem cookie. Quem espera "nenhum dado pessoal em momento algum" não encontra isso aqui — e nenhuma alternativa avaliada oferece.
+- **A dispensa do banner de consentimento é premissa de projeto, não conclusão jurídica verificada.** A decisão foi construída para não depender do banner; confirmar que ele é efetivamente dispensável, sob LGPD e sob GDPR, é avaliação humana pendente para o momento da instalação.
+- **Um terço dos dados não existe, e o erro não é uniforme.** A estratégia aceita medir mal de propósito, em troca de privacidade e da arquitetura estática. A régua de A8 reduz o risco de ler mal esse dado; não o elimina. Se em algum momento uma decisão real exigir precisão, esta decisão não a fornece — e o gatilho 4 é o caminho, não um contorno silencioso.
 - **Nenhum histórico é garantido.** Retenção não documentada somada à possibilidade de troca de fornecedor significa que a série longa pode simplesmente não existir. Aceito porque A7 não faz nenhuma decisão depender dela.
 - **Parte do levantamento envelhece rápido.** Preços, limites e termos de uso são o insumo menos durável desta decisão. Por isso nenhuma propriedade depende de um número específico.
 - **A decisão adiciona um serviço externo** a um projeto cuja arquitetura pede o contrário (`architecture.md` §11). A mitigação é a superfície: uma linha, removível, que nada em `src/` consome.
@@ -193,7 +211,9 @@ Cada gatilho é uma necessidade ou problema concreto e observável.
 2. **O histórico passar a ter valor que a migração perderia** — é neste momento que a portabilidade deixa de ser critério de avaliação e vira requisito, e não antes.
 3. **GoatCounter passar a exigir plano pago, questionar o uso do projeto, degradar o serviço ou ser descontinuado** — reabre a escolha de fornecedor, sem reabrir as propriedades.
 4. **A subcontagem deixar de ser aceitável para uma decisão concreta** — reabre o trade-off de A3, com o custo da arquitetura estática explícito na mesa. Não é autorização para contornar A3 silenciosamente.
-5. **Passar a existir domínio próprio proxied na Cloudflare** — analytics de borda, server-side e não-bloqueável, torna-se opção sem custo adicional. Reabre a comparação; não obriga a trocar.
+5. **Passar a existir domínio próprio proxied na Cloudflare** — a injeção automática do beacon passa a estar disponível, o que permitiria **remover o acoplamento manual de `src/`** e fecharia a lacuna de D6 registrada em A4 e em §4. É a única condição conhecida que resolve essa lacuna, e por isso reabre a comparação com a Cloudflare Web Analytics — sem obrigar a trocar.
+
+   O que este gatilho **não** significa: injeção automática continua sendo beacon JavaScript executado no cliente, igualmente sujeito a bloqueio, e não altera nada quanto a eventos customizados ou retenção, que permanecem como o levantamento registrou. Coleta de borda ou baseada em logs de servidor seria **alternativa distinta, não avaliada neste levantamento**, e exigiria avaliação própria de custo, tráfego automatizado, perfil de privacidade e relação com A3.
 6. **Surgir necessidade de processar dado pessoal** — newsletter, autenticação ou formulário. Sai do escopo de A1 e exige decisão própria, não a extensão silenciosa desta.
 
 Reavaliação gera **novo ADR**. Este documento não é reescrito para alterar a decisão histórica, conforme `conventions.md` §10.
@@ -202,13 +222,13 @@ Reavaliação gera **novo ADR**. Este documento não é reescrito para alterar a
 
 - **Não adotar analytics algum.** É a alternativa mais barata e a mais fácil de defender contra `architecture.md` §11 — custo, código e superfície de privacidade iguais a zero. Descartada porque elimina o único ciclo de feedback disponível para uma das metas centrais de `vision.md` ("construir em público"), e porque não decidir não é neutro: transfere a decisão para o momento de menor deliberação. Vale notar que **A9 preserva quase todo o benefício desta alternativa** — na prática, nada existe até o gatilho.
 
-- **Cloudflare Web Analytics** — a alternativa mais conveniente, gratuita, ilimitada e já dentro da conta usada para deploy. Descartada por três fatos somados. **Não suporta eventos customizados** (*"Not yet"*), o que a inviabiliza como caminho para o Playground IA. **Retém dado não amostrado por apenas 7 dias**, agregando a cerca de 10% depois — o que torna incompatíveis "trocar de ferramenta um dia" e "ter histórico". E, decisivo para a comparação, **sem domínio próprio proxied a injeção automática não está disponível**, de modo que o snippet manual acaba dentro de `src/` como em qualquer concorrente: some a única vantagem estrutural que ela teria. Some-se que escolhê-la aprofundaria a concentração no provedor que o próprio ADR-0006 §4 nomeou como vetor de erosão de D6. **Voltaria a ser candidata caso exista domínio próprio proxied** (gatilho 5).
+- **Cloudflare Web Analytics** — a alternativa mais conveniente, gratuita, ilimitada e já dentro da conta usada para deploy. Descartada por três fatos somados. **Não suporta eventos customizados** (*"Not yet"*), o que a inviabiliza como caminho para o Playground IA. **Retém dado não amostrado por apenas 7 dias**, agregando a cerca de 10% depois — o que torna incompatíveis "trocar de ferramenta um dia" e "ter histórico". E, decisivo para a comparação, **sem domínio próprio proxied a injeção automática não está disponível**, de modo que o snippet manual acaba dentro de `src/` como em qualquer concorrente: some a única vantagem estrutural que ela teria. Some-se que escolhê-la aprofundaria a concentração no provedor que o próprio ADR-0006 §4 nomeou como vetor de erosão de D6. **Voltaria a ser candidata caso exista domínio próprio proxied** (gatilho 5), condição que lhe devolveria essa vantagem — **sem responder às outras duas objeções**, que independem do domínio.
 
 - **Umami Cloud** — a mais forte para o propósito futuro do Playground, com eventos com propriedades, exportação completa de dados, seis meses de retenção documentada e continuidade sustentada por planos pagos. **Não descartada: mantida como candidato condicional.** O que a impede hoje é A6 — o comportamento ao atingir 100.000 eventos/mês não é documentado, e a formulação disponível em fonte secundária é ambígua entre parar de coletar e migrar para plano pago. Secundariamente, armazena IP hasheado, sobre o qual não há consenso jurídico quanto a ser dado pessoal, o que a deixa um degrau abaixo em A1.
 
 - **Plausible, Fathom e equivalentes pagos** — melhores em ergonomia, hospedagem europeia e maturidade. Descartados por **não terem tier gratuito permanente**: o Plausible oferece apenas teste de 30 dias, com o plano mais barato a US$ 9/mês. Mensalidade recorrente é desproporcional para um site sem tráfego, e o critério é de custo, não de capacidade. Permanecem como caminho legítimo caso o gatilho 3 ocorra.
 
-- **Google Analytics 4** — descartado sem comparação detalhada. Usa cookies e identificadores persistentes, o que exige banner de consentimento e reintroduz a funcionalidade que A1 existe para evitar; viola A2; e é incoerente com a tese pública do projeto. Registrado porque é a escolha default do setor, e o silêncio sobre ela seria lido como esquecimento.
+- **Google Analytics 4** — descartado sem comparação detalhada. Usa cookies e identificadores persistentes, o que **viola A1 diretamente** e, na prática consolidada do setor, é tratado como exigindo banner de consentimento — reintroduzindo a funcionalidade que A1 existe para tornar dispensável; viola também A2; e é incoerente com a tese pública do projeto. Registrado porque é a escolha default do setor, e o silêncio sobre ela seria lido como esquecimento.
 
 - **Coleta própria via Worker, Workers Analytics Engine ou processamento de logs.** Descartada por violar A3, consumir orçamento de invocação contra D8, produzir código que o ADR-0005 T3 tornaria obrigatoriamente testado, e transformar o projeto em controlador de endereços IP — dado pessoal, com todas as obrigações associadas. É também a "abstração caseira crescente" que o ADR-0003 já registrou como risco assumido em outra camada; repeti-lo aqui seria assumir o mesmo risco sem o mesmo motivo.
 
