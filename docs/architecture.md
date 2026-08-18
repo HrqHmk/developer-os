@@ -253,6 +253,6 @@ A arquitetura deve evitar inicialmente:
 
 ### Pendentes
 
-- [ ] Analytics
+- [ ] Analytics — **ADR-0007 proposto** (`docs/adr/0007-estrategia-de-analytics.md`), aguardando aceitação. Propriedades duráveis A1–A9, com GoatCounter como implementação inicial substituível e instalação condicionada ao gatilho de A9. Move para *Definidas* apenas na aceitação.
 - [ ] Estratégia para Playground IA
 - [ ] CI/CD
