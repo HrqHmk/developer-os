@@ -1,7 +1,7 @@
 # ADR-0007 — Estratégia de Analytics
 
 ## Status
-Proposto
+Aceito
 
 ## Contexto
 
@@ -108,6 +108,8 @@ Estas propriedades são a decisão. Qualquer implementação — atual ou futura
 
   A6 é sobre o **modelo de relação comercial, não sobre o tamanho do tier**. É o que faz um limite de 100.000 eventos ser aceitável e um upgrade automático não ser, independentemente do valor envolvido.
 
+  **A6 é revalidada, não presumida.** É verificada **no momento da instalação** e novamente **a cada troca de fornecedor ou mudança de plano** — não é conclusão obtida uma vez e herdada dali em diante. A verificação é sempre a mesma pergunta: *ao atingir o limite, a coleta para, ou ocorrem upgrade e cobrança sem ação humana?* Enquanto a resposta for desconhecida, o candidato não é adotável — é o que mantém o Umami Cloud como condicional (§3). Para o fornecedor já adotado, a resposta pode mudar sem aviso: alteração de termos é o gatilho 3, e não algo a descobrir na fatura.
+
 #### Régua e valor
 
 - **A7 — Cada métrica coletada por instrumentação própria deriva de uma pergunta que muda uma decisão.** Com o propósito editorial fixado, o conjunto mínimo é **pageview por rota** e **referrer**. Nada além disso é adicionado sem uma pergunta associada.
@@ -166,7 +168,9 @@ Registrados para não serem redescobertos como surpresa. Nenhum altera a decisã
 
 - **O limite do plano gratuito é qualitativo, não numérico.** *"Reasonable public usage"* não é verificável de antemão, e o número de 100.000 pageviews/mês circulante em fontes secundárias não foi confirmado oficialmente. Na prática o risco é baixo — a Fase 1 do roadmap não produz volume próximo disso —, mas a incerteza é real e assumida.
 
-- **A cláusula de uso comercial tem a mesma forma que motivou a rejeição da Vercel no ADR-0006** — elegibilidade gratuita condicionada a decisões editoriais futuras, como patrocínio ou doação. A assimetria de peso é o que justifica decidir diferente, e precisa ser explícita: lá a migração custava plataforma, URLs e identidade acumulada; aqui A4 reduz a troca à deleção de uma linha. **É a mesma forma com um custo de saída de ordem completamente diferente**, não uma inconsistência de critério.
+- **A cláusula de uso comercial tem a mesma forma que motivou a rejeição da Vercel no ADR-0006** — elegibilidade gratuita condicionada a decisões editoriais futuras, como patrocínio ou doação. A assimetria de peso é o que justifica decidir diferente, e precisa ser explícita — sem se apoiar em estimativa do tamanho do diff.
+
+  Lá, a dependência estava na **plataforma que serve o site**: identidade acumulada em URLs publicadas, e uma transição que atravessa build, runtime, segredos e DNS. Aqui, a dependência é de um **serviço acessório**, que não participa de servir página alguma e do qual **nenhuma funcionalidade depende** (A4). O que sustenta a decisão diferente é **baixo impacto arquitetural e reversibilidade**: substituir o fornecedor não altera o comportamento da aplicação, e o critério de A4 — remover a fronteira ou torná-la no-op sem mudança funcional — é o que torna essa reversibilidade verificável em vez de apenas afirmada. **É a mesma forma com um custo de saída de outra ordem**, não uma inconsistência de critério.
 
 - **Mantenedor único e serviço custeado por doação.** Risco de continuidade real, mitigado por A4 e pela licença EUPL-1.2, mas não eliminado. Self-host não é mitigação utilizável neste projeto: o ADR-0006 já descartou responsabilidade de infraestrutura própria pelo mesmo argumento que descartou VPS.
 
@@ -205,7 +209,7 @@ Registrados para não serem redescobertos como surpresa. Nenhum altera a decisã
 - **Um terço dos dados não existe, e o erro não é uniforme.** A estratégia aceita medir mal de propósito, em troca de privacidade e da arquitetura estática. A régua de A8 reduz o risco de ler mal esse dado; não o elimina. Se em algum momento uma decisão real exigir precisão, esta decisão não a fornece — e o gatilho 4 é o caminho, não um contorno silencioso.
 - **Nenhum histórico é garantido.** Retenção não documentada somada à possibilidade de troca de fornecedor significa que a série longa pode simplesmente não existir. Aceito porque A7 não faz nenhuma decisão depender dela.
 - **Parte do levantamento envelhece rápido.** Preços, limites e termos de uso são o insumo menos durável desta decisão. Por isso nenhuma propriedade depende de um número específico.
-- **A decisão adiciona um serviço externo** a um projeto cuja arquitetura pede o contrário (`architecture.md` §11). A mitigação é a superfície: uma linha, removível, que nada em `src/` consome.
+- **A decisão adiciona um serviço externo** a um projeto cuja arquitetura pede o contrário (`architecture.md` §11). A mitigação é o impacto: fronteira única, removível, da qual nenhuma funcionalidade depende (A4).
 
 ## Gatilhos de reavaliação
 
