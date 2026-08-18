@@ -80,15 +80,19 @@ Estas propriedades são a decisão. Qualquer implementação — atual ou futura
 
   A mordida concreta é específica e vale registrá-la: **A3 proíbe o proxy first-party do beacon**, que é a técnica usual para escapar de bloqueadores. O trade-off é recusado aqui e assumido em A8.
 
-- **A4 — O acoplamento ao fornecedor é confinado a uma única fronteira e é unidirecional.**
+- **A4 — O conhecimento do fornecedor é confinado a uma única fronteira, e analytics nunca é dependência funcional da aplicação.**
 
-  *Confinado:* **o conhecimento do fornecedor vive em uma única fronteira.** Nenhum componente, rota, loader ou lógica de domínio nomeia o fornecedor, importa seu SDK ou depende do formato da sua API. Remover analytics é deletar essa fronteira.
+  *Fronteira única:* apenas a fronteira de analytics conhece **SDK, endpoints, configuração e formatos** do fornecedor. Nenhum componente, rota, loader ou lógica de domínio o nomeia. Componentes podem **emitir eventos em vocabulário próprio do projeto**, sem conhecer como são coletados.
 
-  Hoje, sem eventos, a fronteira é literalmente **um ponto de injeção no documento raiz**, e nenhum adaptador é criado — não existe uso que o justifique, e criá-lo agora seria a abstração antecipada que `conventions.md` §7 e `architecture.md` §11 recusam. Caso eventos passem a existir, a fronteira pode assumir a forma de um **adaptador em `src/integrations/`**, e a emissão do evento passa a ser permitida no ponto onde a interação acontece. O que a propriedade continua proibindo é que esse ponto conheça o fornecedor: um componente do Playground emite um evento no vocabulário do domínio, e quem traduz isso em chamada de GoatCounter, Umami ou qualquer outro é a fronteira, e só ela.
+  *Não é dependência funcional:* os dados fluem apenas da aplicação para a fronteira. Nenhuma funcionalidade consulta analytics ou depende de seus resultados — um bloco de "posts mais lidos" transformaria um serviço externo em dependência de renderização, contra `architecture.md` §6 e contra a forma do artefato de ADR-0006 §2.
 
-  A separação entre as duas coisas é o que mantém a propriedade aplicável. Exigir um **único local físico de instrumentação** tornaria a instrumentação do Playground artificialmente impossível, porque um evento de interação só pode ser emitido onde a interação ocorre. **O alvo de A4 é impedir que o fornecedor se espalhe pela aplicação, não impedir que a aplicação expresse eventos próprios.**
+  **O critério de verificação é único e concreto: remover a fronteira, ou torná-la no-op, não altera o comportamento funcional da aplicação.** É isso que separa A4 de uma intenção de projeto e a torna checável em code review, no mesmo espírito com que o ADR-0005 T5 converteu "não afrouxar teste" em algo observável no diff.
 
-  *Unidirecional:* **a aplicação nunca lê dados de analytics.** Nada em `src/` consome a API do fornecedor, em build ou em runtime. Isso barra o vetor concreto de erosão neste projeto: um bloco de "posts mais lidos" transformaria um serviço externo em dependência de renderização, contra `architecture.md` §6 e contra a forma do artefato de ADR-0006 §2.
+  A4 não se confunde com A5, embora as duas se toquem: **A5 governa o runtime** — o script bloqueado ou fora do ar não quebra a página; **A4 governa o desenho** — a aplicação não seria diferente se analytics jamais tivesse sido adotado.
+
+  *Estado atual e evolução:* hoje, sem eventos, a fronteira é literalmente **um ponto de injeção no documento raiz**, e **nenhum adaptador é criado** — não existe uso que o justifique, e criá-lo agora seria a abstração antecipada que `conventions.md` §7 e `architecture.md` §11 recusam. Caso eventos passem a existir, a fronteira pode assumir a forma de um **adaptador em `src/integrations/`**, e a emissão passa a ocorrer no ponto onde a interação acontece. Exigir um **único local físico de instrumentação** tornaria a instrumentação do Playground artificialmente impossível, já que um evento de interação só pode ser emitido onde a interação ocorre: **o alvo de A4 é o acoplamento, não a localização.**
+
+  *Limite da substituibilidade:* trocar de fornecedor altera somente a fronteira — **no código**. Diferenças de capacidade entre fornecedores permanecem: um fornecedor sem eventos customizados torna eventos de domínio inertes na fronteira. Isso é a propriedade funcionando, não sendo violada, e é o mesmo recorte honesto que o ADR-0006 aplicou a D6, que "reduz a superfície dessa migração; não a elimina".
 
   **A4 não é D6 e não afirma satisfazê-la.** D6 governa a plataforma de deploy e exige acoplamento fora de `src/`; sem domínio próprio, analytics necessariamente coloca uma linha nomeando o fornecedor dentro de `src/` (ver gatilho 5). A4 é a propriedade análoga com a garantia que é de fato alcançável — superfície mínima, localizada e reversível. Declarar a diferença é preferível a afirmar uma conformidade falsa, no mesmo espírito do ADR-0006 §4.
 
