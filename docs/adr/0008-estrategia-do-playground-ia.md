@@ -1,7 +1,7 @@
 # ADR-0008 — Estratégia do Playground IA
 
 ## Status
-Proposto
+Aceito
 
 ## Contexto
 
