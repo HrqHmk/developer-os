@@ -69,7 +69,15 @@ Estas propriedades são a decisão. Qualquer experiência — atual ou futura �
 
   Duas precisões, porque sem elas o critério seria falso na primeira leitura: o **item de navegação** que aponta para o Playground desaparece junto, e isso não é violação — a propriedade é sobre dependência funcional, não sobre identidade visual da página; e as **entradas editoriais de experiências aposentadas** (PG5) são conteúdo do Playground, não conteúdo externo, de modo que removê-las junto é o comportamento esperado e não uma quebra de PG1.
 
-  O sequenciamento do roadmap torna a propriedade observada em vez de afirmada: o site existirá publicado, com conteúdo e com integrações, por todas as fases anteriores, sem Playground algum.
+  O sequenciamento do roadmap torna essa parte da propriedade observada em vez de afirmada: o site existirá publicado, com conteúdo e com integrações, por todas as fases anteriores, sem Playground algum.
+
+  *Raio de explosão.* **Falha, abuso, indisponibilidade, esgotamento de cota, vulnerabilidade ou erro de build ou de deploy do Playground não pode retirar do ar, impedir a publicação nem degradar as rotas principais do Developer OS.**
+
+  A distinção entre as duas cláusulas é o ponto da propriedade, e não uma redundância. A primeira verifica **acoplamento de código**; a segunda verifica **o que acontece enquanto o Playground existe**, que é o risco que `architecture.md` §7 nomeia ao exigir que experimentos "não comprometam a estabilidade da aplicação principal". Removibilidade não entrega isso: numa aplicação única, um módulo do Playground que quebre o build quebra a publicação do site inteiro — inclusive de uma correção de conteúdo sem relação alguma com ele —, e cota consumida por abuso é cota compartilhada.
+
+  Vale registrar o que a implementação inicial do ADR-0006 já resolve e o que ela não resolve, para que a propriedade não seja lida como mais ou menos satisfeita do que é. **Requisição a ativo estático não invoca o Worker**, de modo que esgotar o orçamento de invocações não derruba conteúdo pré-renderizado: essa parte é atendida por construção hoje. **A publicação, não.** Build e deploy são únicos, e é aí que o acoplamento é real e não está mitigado por nada. A primeira metade é fato de implementação substituível (ADR-0006 §3), não garantia — por isso a propriedade existe.
+
+  O **mecanismo permanece em aberto**: separação de build, de deploy, de cota, de aplicação, ou combinação. O que a propriedade fixa é que **demonstrar esse isolamento é pré-condição da primeira experiência pública**, no mesmo regime em que D9 é pré-condição do primeiro segredo — verificação antes, não consequência depois. Se o isolamento não for demonstrável dentro da aplicação única, **a arquitetura separada deixa de ser alternativa reaberta pelo gatilho 2 e passa a ser consequência desta propriedade**, com a preferência por aplicação única de `architecture.md` §3 cedendo a ela.
 
 - **PG2 — Nenhuma experiência converte rota de conteúdo em requisição dinâmica.** Preserva a forma do artefato de ADR-0006 §2, D7 e A3: requisição de conteúdo continua sendo requisição a ativo estático.
 
@@ -97,7 +105,7 @@ Estas propriedades são a decisão. Qualquer experiência — atual ou futura �
 
   O limite **se renova em janela apropriada**. Abuso ou pico produzem indisponibilidade temporária, não a eliminação da experiência pelo resto do período — um teto mensal acumulado transformaria um único dia ruim em um mês inteiro desligado.
 
-  Ao atingir o limite: **nenhuma cobrança automática, nenhum upgrade automático, nenhum fallback para modalidade paga, nenhum erro técnico cru para o visitante.** A experiência entra no estado definido por PG5.
+  Ao atingir o limite: **nenhuma cobrança automática, nenhum upgrade automático, nenhum fallback para modalidade paga, nenhum erro técnico cru para o visitante.** A experiência entra no estado **pausado** de PG5, e volta sozinha quando a janela se renovar.
 
   A propriedade é mais estrita que suas antecessoras, e a progressão é deliberada: D8 aceita "parar de servir"; A6 acrescenta a proibição de upgrade automático, porque produz custo sem decisão humana; **PG4 acrescenta que o teto precisa ser conhecido antes da publicação, e não descoberto em produção.** É essa última cláusula que dá dentes ao conjunto — sem ela, "teto renovável" pressupõe um teto que talvez não seja calculável.
 
@@ -111,7 +119,11 @@ Estas propriedades são a decisão. Qualquer experiência — atual ou futura �
 
 - **PG5 — A execução não tem promessa de permanência; o registro editorial tem.**
 
-  Uma experiência pode ser **ativa**, **aposentada** ou **substituída**. Aposentar não é falha: é operação normal, e pode decorrer de indisponibilidade de fornecedor, de limite de custo, de evolução do projeto ou de simples decisão editorial.
+  Uma experiência pode ser **ativa**, **pausada**, **aposentada** ou **substituída**. Aposentar não é falha: é operação normal, e pode decorrer de indisponibilidade de fornecedor, de evolução do projeto ou de simples decisão editorial.
+
+  **Pausada** é o estado de indisponibilidade **temporária e reversível**: limite de PG4 atingido, fornecedor fora do ar, ou desligamento deliberado por prazo determinado. Ele é distinto de aposentadoria em três aspectos, e a distinção é a razão de o estado existir: a página permanece **idêntica à da experiência ativa**, menos a execução; **a reativação não exige decisão humana nem deploy** quando a causa é o limite, porque a janela de PG4 se renova sozinha; e **pausar não é evento editorial** — nada no registro muda, e a experiência não passa a ser descrita como passada.
+
+  A alternativa era mandar o esgotamento de limite para a aposentadoria, e ela é incorreta: PG4 determina que o limite se renove, e aposentar algo que volta sozinho em uma hora seria descrever mal o que aconteceu — além de tornar a aposentadoria reversível, o que ela não é.
 
   O que não tem promessa de permanência é a **execução**. A **página** não é a execução: a metade editorial é conteúdo governado pelo ADR-0003, versionada e durável por natureza; a metade interativa é código, descartável por PG3. Uma experiência aposentada **mantém a página** — o que demonstrava, qual decisão de engenharia apresentava e o registro que permita a ela continuar tendo valor de portfólio. **Nunca uma página quebrada, um 404 ou aparência de abandono.**
 
@@ -119,7 +131,9 @@ Estas propriedades são a decisão. Qualquer experiência — atual ou futura �
 
   PG5 e PG3 não conflitam porque operam sobre coisas diferentes: **deletar o código não deleta a página, porque a página nunca foi o código.**
 
-  Como PG4 exige entrada automática neste estado ao atingir o limite, **o estado desligado precisa ser alcançável sem deploy**. Aposentadoria deliberada pode ser um deploy; esgotamento de limite não pode.
+  Como PG4 exige entrada automática no estado **pausado** ao atingir o limite, **esse estado precisa ser alcançável sem deploy**. Aposentadoria deliberada pode ser um deploy; esgotamento de limite não pode.
+
+  O que o visitante encontra em cada estado **não é prescrito aqui**: a redação da mensagem e a forma da página são critérios de aceite da Issue da experiência, pelo mesmo motivo que o formato do registro não é fixado acima. O que a propriedade garante é o conjunto de estados, o que distingue um do outro e o que nunca é aceitável em nenhum deles — página quebrada, 404 ou erro técnico cru.
 
 #### Superfície pública
 
@@ -163,6 +177,10 @@ Estas propriedades são a decisão. Qualquer experiência — atual ou futura �
 
 - **PG10 — Ativação por gatilho.** Nada do Playground é construído antes de existir uma **experiência concreta escolhida por seu valor como demonstração de engenharia**. Até lá, a ausência do Playground não é lacuna — é a decisão sendo cumprida. Mesma manobra de T10, A9 e ADR-0006 §3.
 
+  **Existir a experiência é condição necessária, não suficiente.** A ativação é uma **decisão humana afirmativa**, tomada naquele momento, de que o benefício compensa o custo de implementar e de manter — e não uma consequência automática de ter encontrado uma boa demonstração. Enquanto essa decisão não for tomada, o Playground continua não existindo, e isso segue não sendo lacuna.
+
+  **A continuidade e a evolução do site principal têm precedência sobre a implementação e a manutenção do Playground.** É a leitura direta de `architecture.md` §7 — experimentos não comprometem a estabilidade nem aumentam desnecessariamente a complexidade da aplicação principal — aplicada ao custo de oportunidade, e não apenas ao risco técnico: manutenção do Playground que passe a deslocar trabalho essencial do produto principal viola esta propriedade tanto quanto uma falha o faria.
+
   *Corolário, e é o mais importante:* **a arquitetura não escolhe qual demonstração vale a pena construir.** Se a experiência de maior valor exigir capacidade ainda não ativada — runtime, segredo, API externa —, as pré-condições são cumpridas antes de implementá-la. Não se troca a experiência por outra apenas para evitar a decisão. Escolher deliberadamente uma primeira experiência sem segredo permanece **opção estratégica legítima, nunca regra arquitetural**.
 
 ### 2. Efeito sobre a régua de testes
@@ -188,6 +206,8 @@ Registrados para não serem redescobertos como surpresa. Nenhum altera a decisã
 - **PG4 exige contagem, e contagem é estado.** Não se impõe teto sem contar, e um contador que sobrevive entre requisições é persistência. Isso tensiona `architecture.md` §8 e aciona o gatilho 6 do ADR-0006 — **a propriedade mais forte do conjunto é a que mais tensiona a restrição mais explícita do projeto.** Não é resolvido aqui, e não deve ser resolvido por reflexo com o primitivo mais próximo.
 
 - **PG4 governa consumo público e não cobre custo em build.** Uma experiência que pré-compute algo com fornecedor pago durante o build consome fora da janela pública, e G2 roteia toda mudança por merge — inclusive correção de typo. O risco é limitado pela frequência de deploy, não por PG4. Registrado; decidir agora seria antecipar.
+
+- **A cláusula de raio de explosão de PG1 não é verificável hoje**, porque não existe aplicação, build nem deploy contra os quais demonstrá-la. Ela é pré-condição da primeira experiência pública, no molde de D9 — e, como D9, é hoje satisfeita de forma vacuamente verdadeira. O custo dessa formulação está declarado nos contras: ela pode forçar arquitetura separada.
 
 - **PG3 tem uma exceção que não é deletável**: o código que realiza as garantias. É legítimo e é também o disfarce mais provável de uma plataforma nascente.
 
@@ -216,6 +236,7 @@ Registrados para não serem redescobertos como surpresa. Nenhum altera a decisã
 ### Contras e riscos
 
 - **PG4 exclui uma classe de demonstração.** Agentes abertos com tool calling encadeado — item da própria lista de exemplos conceituais do engenheiro — podem não ser publicáveis nesta forma. A consequência foi aceita explicitamente, mas é uma perda real, e o gatilho 5 existe para que ela seja reavaliada por escrito e não contornada em silêncio.
+- **PG1 pode forçar a arquitetura separada que `architecture.md` §3 prefere evitar.** Exigir isolamento de raio de explosão, e não apenas de código, é a mudança que mais aumenta o custo potencial desta decisão: se build e deploy únicos não puderem ser isolados, o desfecho é dois deploys e duas superfícies operacionais para um portfólio pessoal. O custo é aceito porque a alternativa é pior — um módulo de experimento capaz de impedir a publicação de uma correção de conteúdo contradiz `architecture.md` §7 diretamente.
 - **A propriedade mais forte é a que mais tensiona a restrição mais explícita.** PG4 provavelmente exigirá persistência, e `architecture.md` §8 mantém persistência em aberto justamente para não ser decidida por reflexo.
 - **Decidir na Fase 6 a partir da Fase 1 é o oposto da disciplina que o projeto pratica.** PG10 é a mitigação, mas não elimina o risco de o documento envelhecer nas partes que tocam custo e mecanismo.
 - **PG6 e PG9 deixam em aberto exatamente as duas coisas mais difíceis** — defesa contra abuso e persistência de input. É a escolha certa hoje e é também a razão pela qual este ADR não conclui o assunto.
@@ -228,7 +249,9 @@ Registrados para não serem redescobertos como surpresa. Nenhum altera a decisã
 Cada gatilho é uma necessidade ou problema concreto e observável.
 
 1. **Existir uma experiência concreta escolhida** — ativa PG10 e obriga a responder PG4 e PG6 **antes** do código, além de disparar o levantamento técnico que este ADR deliberadamente não fez.
-2. **O Playground crescer além da definição de §Contexto** — deixar de ser um conjunto pequeno de experiências, ou exigir arquitetura própria. Reabre esta decisão e **reabre a alternativa híbrida que o ADR-0001 descartou** *"sem necessidade concreta neste momento"* — argumento que, com o Playground por último e num site já estável, ficou mais fraco, não mais forte.
+2. **O Playground crescer além da definição de §Contexto** — deixar de ser um conjunto pequeno de experiências. Reabre esta decisão e **reabre a alternativa híbrida que o ADR-0001 descartou** *"sem necessidade concreta neste momento"* — argumento que, com o Playground por último e num site já estável, ficou mais fraco, não mais forte.
+
+   Este gatilho deixou de ser o único caminho para a arquitetura separada. **O raio de explosão de PG1 pode exigi-la antes**, e por outro motivo: não porque o Playground cresceu, mas porque o isolamento não foi demonstrável na aplicação única.
 3. **Impor o limite de PG4 exigir persistência** — aciona `architecture.md` §8 e o gatilho 6 do ADR-0006; decisão própria, não extensão silenciosa desta.
 4. **Surgir necessidade de persistir conteúdo digitado pelo visitante** — fecha PG9 e exige decisão própria, por envolver dado pessoal e persistência ao mesmo tempo.
 5. **Uma experiência de alto valor ser inviabilizada por PG4** — **não é autorização para enfraquecer PG4**. É o momento de escolher explicitamente, por escrito, entre a propriedade e a demonstração.
@@ -246,7 +269,7 @@ Reavaliação gera **novo ADR**. Este documento não é reescrito para alterar a
 
 - **Definir agora um runtime, registry ou definição comum de experimentos**, para que a segunda e a terceira experiências fossem baratas. Descartada por PG3 e por `architecture.md` §11: sem consumidores reais, é abstração por antecipação, e T3 item 3 já cobra o preço de quem a criar. O custo aceito é que as primeiras experiências terão duplicação — e é exatamente essa duplicação que produzirá a evidência de repetição, se ela existir.
 
-- **Aplicação separada para o Playground** — o híbrido que o ADR-0001 descartou. **Não descartada de vez**: fica registrada no gatilho 2. Contraria hoje a preferência por aplicação única de `architecture.md` §3 e introduz dois deploys sem necessidade concreta; mas o argumento que a derrubou era temporal, e o tempo mudou a favor dela.
+- **Aplicação separada para o Playground** — o híbrido que o ADR-0001 descartou. **Não descartada, e deixou de ser apenas uma alternativa:** com a cláusula de raio de explosão de PG1, ela é o desfecho previsto caso o isolamento não seja demonstrável dentro da aplicação única. Contraria hoje a preferência por aplicação única de `architecture.md` §3 e introduz dois deploys sem necessidade concreta — mas §3 pede aplicação única "até existir necessidade concreta", e PG1 descreve exatamente a necessidade que a produziria. O argumento que a derrubou no ADR-0001 era temporal, e o tempo mudou a favor dela.
 
 - **Orçamento mensal pequeno e monitorado**, em vez de teto duro. É a alternativa honesta a PG4, e não é irracional: o propósito do Playground é ser visto por poucas pessoas de alto valor, e "indisponível" é um modo de falha caro em termos do próprio objetivo. Descartada por assimetria de risco — uma demonstração indisponível custa uma impressão perdida; um endpoint público com custo variável, sem identidade e sem limite superior confiável custa dinheiro rápido, e alerta é sempre atrasado enquanto laço de agente não é. O custo da escolha é nomeado e não escondido: **a experiência pode estar desligada exatamente para o visitante raro que importava.** É PG5 que torna isso tolerável, e é a janela renovável de PG4 que impede que seja permanente.
 
