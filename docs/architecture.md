@@ -148,11 +148,15 @@ Integrações devem permanecer isoladas da lógica principal da aplicação.
 
 ## 7. Playground IA
 
-O Playground deverá funcionar como uma área isolada para experimentos.
+Governado pelo ADR-0008 (`docs/adr/0008-estrategia-do-playground-ia.md`), status: Aceito.
 
-Experimentos não devem comprometer a estabilidade ou aumentar desnecessariamente a complexidade da aplicação principal.
+Os objetivos originais desta seção — área isolada para experimentos, experimentos que não comprometem a estabilidade nem aumentam desnecessariamente a complexidade da aplicação principal, e arquitetura própria quando necessário — estão expressos como propriedades duráveis PG1–PG10 naquele ADR.
 
-Quando necessário, experimentos poderão possuir arquitetura própria.
+O Playground é uma **área interativa do portfólio** com experiências que demonstram decisões concretas de AI Engineering, e **não uma plataforma de experimentos**: experiências são autocontidas, removíveis isoladamente e podem ter implementações diferentes entre si. Infraestrutura compartilhada nasce de repetição demonstrada, nunca de antecipação.
+
+"Área isolada" passou a ter duas leituras verificáveis, e não apenas uma: além de o site não depender do Playground em código, **falha, abuso, esgotamento de cota ou build quebrado do Playground não podem derrubar, bloquear a publicação nem degradar as rotas principais** — e demonstrar esse isolamento é pré-condição da primeira experiência pública (PG1). Caso ele não seja demonstrável dentro da aplicação única, a arquitetura própria prevista aqui deixa de ser opção e passa a ser consequência da propriedade, com a preferência por aplicação única de §3 cedendo a ela.
+
+Nada é construído antes do gatilho de PG10, e a ativação é **decisão humana afirmativa** — existir uma boa demonstração é condição necessária, não suficiente.
 
 ---
 
@@ -253,7 +257,8 @@ A arquitetura deve evitar inicialmente:
 
 - Estratégia de analytics: propriedades duráveis A1–A9 (registrado em ADR-0007, status: Aceito). Coleta cookieless e agregada, sem identificador persistente e sem persistir IP ou User-Agent; medir não invoca o runtime servidor, preservando a forma do artefato definida em ADR-0006 §2. O conhecimento do fornecedor é confinado a uma única fronteira, e analytics nunca é dependência funcional da aplicação — removê-la ou torná-la no-op não altera o comportamento. GoatCounter é a implementação inicial, substituível sem novo ADR; Umami Cloud é candidato condicional. **Nada é instalado antes do gatilho de A9** (conteúdo publicado e distribuição externa), e **A6 (ausência de cobrança automática ou variável) é revalidada na instalação e a cada troca de fornecedor ou plano**. Os números são direcionais, não exatos (A8).
 
+- Estratégia do Playground IA: propriedades duráveis PG1–PG10 (registrado em ADR-0008, status: Aceito). Área interativa do portfólio com experiências que demonstram decisões concretas de AI Engineering, não uma plataforma de experimentos; experiências autocontidas e removíveis isoladamente, com infraestrutura compartilhada nascendo de repetição demonstrada. O Playground nunca é dependência do site, e **demonstrar isolamento de raio de explosão é pré-condição da primeira experiência pública** (PG1). Consumo público de recurso pago exige teto conhecido antes da publicação e renovável em janela, sem cobrança, upgrade ou fallback pago automáticos (PG4); a execução não tem promessa de permanência, mas o registro editorial tem (PG5). Nenhum fornecedor, modelo, SDK ou mecanismo é escolhido, e **nada é construído antes do gatilho de PG10**, cuja ativação é decisão humana afirmativa. **PG9 — persistir conteúdo digitado pelo visitante — permanece deliberadamente em aberto.** Ver §7.
+
 ### Pendentes
 
-- [ ] Estratégia para Playground IA
 - [ ] CI/CD

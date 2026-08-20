@@ -34,6 +34,7 @@ Em caso de conflito, **ADRs aceitos prevalecem** sobre os demais documentos.
 | [0005](docs/adr/0005-estrategia-de-testes.md) | Estratégia de testes | Aceito |
 | [0006](docs/adr/0006-plataforma-de-deploy.md) | Plataforma e estratégia de deploy | Aceito |
 | [0007](docs/adr/0007-estrategia-de-analytics.md) | Estratégia de analytics | Aceito |
+| [0008](docs/adr/0008-estrategia-do-playground-ia.md) | Estratégia do Playground IA | Aceito |
 
 ## Como o trabalho entra
 
