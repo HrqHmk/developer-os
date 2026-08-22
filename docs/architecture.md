@@ -184,6 +184,8 @@ Os objetivos originais desta seção — deploy automatizado, baixo custo, confi
 
 O artefato publicado é **pré-renderizado e servido como ativo estático**. O runtime servidor existe dentro do artefato — a stack não oferece saída sem servidor — mas não é invocado por requisições de conteúdo pré-renderizado. Execução server-side passa a ser utilizada apenas diante de necessidade concreta, sem exigir troca de plataforma.
 
+A operacionalização desta seção — onde o build executa, o que bloqueia o merge, como as entradas de D1 são fornecidas e qual é o raio de impacto da automação — é governada pelo ADR-0009 (`docs/adr/0009-estrategia-de-ci-cd.md`), status: Aceito.
+
 ---
 
 ## 10. Decisões Arquiteturais
@@ -259,6 +261,10 @@ A arquitetura deve evitar inicialmente:
 
 - Estratégia do Playground IA: propriedades duráveis PG1–PG10 (registrado em ADR-0008, status: Aceito). Área interativa do portfólio com experiências que demonstram decisões concretas de AI Engineering, não uma plataforma de experimentos; experiências autocontidas e removíveis isoladamente, com infraestrutura compartilhada nascendo de repetição demonstrada. O Playground nunca é dependência do site, e **demonstrar isolamento de raio de explosão é pré-condição da primeira experiência pública** (PG1). Consumo público de recurso pago exige teto conhecido antes da publicação e renovável em janela, sem cobrança, upgrade ou fallback pago automáticos (PG4); a execução não tem promessa de permanência, mas o registro editorial tem (PG5). Nenhum fornecedor, modelo, SDK ou mecanismo é escolhido, e **nada é construído antes do gatilho de PG10**, cuja ativação é decisão humana afirmativa. **PG9 — persistir conteúdo digitado pelo visitante — permanece deliberadamente em aberto.** Ver §7.
 
+- Estratégia de CI/CD: propriedades duráveis C1–C9 (registrado em ADR-0009, status: Aceito). Verificação declarada no repositório e publicação delegada à plataforma; toda verificação obrigatória deriva de garantia ou critério documentado (C1) e só bloqueia merge se sua falha for diagnosticável e reexecutável (C2). **Verificação, preview e produção constroem três estados distintos** — referência de merge, head da branch e commit de squash — e a equivalência garantida é de processo e entradas, nunca de identidade de árvore; produção é sempre construída a partir de commit existente em `main` (C4). **C7 é contenção, não isolamento**: a autoridade de publicação da plataforma é de conta e não restringível a um Worker, de modo que o raio de impacto de um build comprometido deve ser tratado como sendo a conta — contido por **conta dedicada exclusivamente ao Developer OS**, pré-condição do primeiro deploy real. Segredos são roteados por função (C8): aplicação e build permanecem com D9 e seu gatilho; **credencial de automação é classe própria que D9 nunca governou**. GitHub Actions para CI e Workers Builds para CD é implementação inicial substituível. **Nada é configurado antes do scaffold do TanStack Start**, e preview de código vindo de fork permanece desabilitado por política.
+
 ### Pendentes
 
-- [ ] CI/CD
+Nenhuma. A última pendência desta seção foi encerrada pelo ADR-0009.
+
+**§8 (Persistência) permanece deliberadamente em aberto**, por gatilho — não por omissão. Ver ADR-0006 gatilho 6 e ADR-0008 §4.
