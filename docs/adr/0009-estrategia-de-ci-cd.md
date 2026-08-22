@@ -1,7 +1,7 @@
 # ADR-0009 — Estratégia de CI/CD
 
 ## Status
-Proposto
+Aceito
 
 ## Contexto
 
