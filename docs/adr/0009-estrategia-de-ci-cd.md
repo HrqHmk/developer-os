@@ -34,6 +34,8 @@ Realizado **depois** de identificadas as perguntas arquiteturais que o exigiam, 
 
 **Workers Builds.** A branch de produção é configurável e, por padrão, é a branch default do repositório; push nela executa o build command seguido do deploy command. **Builds de branch não-produtiva precisam ser habilitados explicitamente**; habilitados, o deploy command é substituído pelo de preview, cujo padrão é `npx wrangler versions upload` — que cria uma versão sem promovê-la a produção. Em Pull Request, a Cloudflare posta comentário com o status e a URL de preview, e gera *check run* no GitHub. Build command, deploy command, deploy command de branch não-produtiva, root directory e **build variables and secrets vivem apenas no dashboard**, e a documentação é explícita: *"Workers Builds does not honor the configurations set in Custom Builds within your Wrangler configuration file."* Já `wrangler.jsonc`, `package.json`, lockfile e `.nvmrc` / `.node-version` são lidos do repositório — e a documentação recomenda fixar a versão de Node por arquivo para evitar atualização automática do build image. Plano Free: 3.000 build minutes/mês, 1 build concorrente, timeout de 20 minutos. **Armadilha documentada:** build pulado não gera check run, e verificação obrigatória que não reporta bloqueia o merge.
 
+**A autoridade da build.** *"By default, Cloudflare will automatically generate an API token for your account when using Workers Builds, and continue to use this API token for all subsequent builds"*, e esse token *"is used to authenticate your build request and authorize the upload and deployment of your Worker"*. O token gerado automaticamente recebe **Account:** Account Settings (read), Workers Scripts (edit), Workers KV Storage (edit), Workers R2 Storage (edit); **Zone:** Workers Routes (edit) para **todas as zonas da conta**; **User:** User Details (read), Memberships (read). É possível fornecer token próprio, e as permissões são reduzíveis — mas **`Workers Scripts: Edit` é de conta e não é restringível a um script específico**: a documentação registra esse padrão explicitamente para outros produtos (*"account-scoped only — they cannot be restricted to a single gateway"*) e não oferece escopo por Worker. Apenas tokens de usuário são suportados hoje. O comando de deploy é uma string configurada no dashboard, mas resolve por `node_modules`, que o repositório controla.
+
 **Versões, segredos e rollback.** Uma versão é *"the complete state of your Worker at a point in time: its bundled code, static assets, bindings, and compatibility settings"*, e *"secrets not included in the file are preserved from the previous version"* — o que **confirma a lacuna de D9 registrada em ADR-0006 §4**. Wrangler Environments criam um Worker separado por ambiente (`<nome>-<ambiente>`), com bindings e variáveis **não-herdáveis** e segredos por ambiente, e são documentados como funcionando sob Workers Builds. Rollback alcança as 100 versões mais recentes sem rebuild, com a ressalva de que recursos conectados não são revertidos junto.
 
 **GitHub.** Actions é gratuito em repositório público com runners padrão. Com exceção de um `GITHUB_TOKEN` somente-leitura, **segredos não são entregues a workflows disparados por fork**. Environments e regras de proteção estão disponíveis no plano Free para repositórios públicos. Uma branch protegida pode exigir verificação de um GitHub App específico. O evento `pull_request` executa sobre a referência de merge entre o head do PR e a base.
@@ -62,11 +64,13 @@ Estas propriedades são a decisão. Qualquer implementação — atual ou futura
 
   A propriedade existe porque a proteção de `main` alcança administradores: uma verificação obrigatória instável não produz atrito, produz **travamento do repositório**, e o único desbloqueio seria desligar a proteção — precisamente a ação que `conventions.md` §11.8 proíbe e que o gatilho 2 do ADR-0004 identifica como corrosão do fluxo. C2 também separa o que uma suíte verde deve significar: falha de infraestrutura e falha de código não podem ser o mesmo sinal.
 
-- **C3 — O que é verificado é o estado que será integrado, não apenas o estado da branch.** Sustenta a afirmação de G1 de que `main` permanece sempre publicável. Sem ela, cada Pull Request pode passar e `main` quebrar por conflito semântico, sem que nenhuma verificação tenha falhado.
+- **C3 — A verificação executa sobre um candidato de integração entre o Pull Request e a base no momento da execução, e não sobre a branch isolada.** Sustenta a afirmação de G1 de que `main` permanece sempre publicável: sem ela, cada Pull Request poderia passar e `main` quebrar por conflito semântico, sem que nenhuma verificação tivesse falhado.
+
+  A redação é deliberadamente mais fraca do que "o estado que será integrado". **Duas coisas impedem a formulação forte**, e ambas são estruturais: a base pode avançar depois que a verificação rodou, e o commit efetivamente integrado nasce no squash. C3 garante que a verificação **não olha a branch sozinha**; não garante que a árvore verificada seja idêntica à publicada. O que a distingue é descrito em §2.
 
 #### Publicação
 
-- **C4 — Produção é construída a partir de um commit que existe em `main`.** Preview e produção reconstroem separadamente; a equivalência entre eles vem de C5, e não de identidade de artefato.
+- **C4 — Produção é construída a partir de um commit que existe em `main`.** Verificação, preview e produção constroem separadamente, sobre estados que podem divergir; a relação entre eles é a descrita em §2, e a confiança vem de C5 — não de identidade de artefato.
 
 - **C5 — As entradas que determinam o artefato são versionadas quando puderem ser, e registradas quando não puderem.** Concretamente: instalação congelada a partir do lockfile (`conventions.md` §2); versão do runtime de build fixada por arquivo no repositório; comando de build declarado no repositório. Qualquer campo residual que só exista na configuração do fornecedor é mantido como **indireção fina** para o que está versionado, e é registrado em `conventions.md`.
 
@@ -76,13 +80,19 @@ Estas propriedades são a decisão. Qualquer implementação — atual ou futura
 
 #### Autoridade e segredos
 
-- **C7 — A autoridade de publicar e de alterar ambiente é exercida apenas por caminho confiável, e código sob controle de um Pull Request não pode acessá-la nem exercê-la.**
+- **C7 — A automação exerce a menor autoridade que a publicação exige, e o raio de impacto de uma execução de build é conhecido, declarado e contido pela conta que hospeda o projeto.**
 
-  A automação **pode** deter autoridade; o que ela não pode é tornar essa autoridade **legível ou acionável** por código não revisado. A propriedade permite o desenho em que um Pull Request não confiável produz um artefato e um mecanismo confiável o publica, sem que a autoridade transite pelo código do Pull Request.
+  Três exigências verificáveis:
 
-  Alcança Pull Request de fork, Pull Request do próprio repositório e — o caso mais provável em fluxo assistido por agentes — **Pull Request que altere a própria definição do pipeline**. É por isso que a propriedade não é sobre forks: um colaborador único também escreve código não revisado.
+  1. **Nenhuma credencial de publicação vive no repositório**, e nenhuma é duplicada para um segundo fornecedor sem necessidade.
+  2. **A autoridade concedida à automação é reduzida ao conjunto mínimo que o deploy efetivamente usa**, e revisada quando esse conjunto mudar.
+  3. **A conta que hospeda o projeto não abriga recurso cujo comprometimento seja pior que o do próprio site.**
 
-  Consequência que dispensa uma definição formal de "ambiente": se a autoridade não é alcançável pelo Pull Request, a garantia é verificável sem que se precise decidir se o executor de build "é" ou "não é" um ambiente.
+  A terceira exigência é o coração da propriedade, e ela existe porque as duas primeiras não bastam. **A execução de build é superfície privilegiada, e não espaço neutro**: código do repositório — incluindo suas dependências — executa no mesmo trabalho que publica, e a plataforma não oferece autoridade de publicação restrita a um recurso. Enquanto isso for verdade, o raio de impacto de comprometer um build **é a conta**, e a única forma de limitá-lo é limitar a conta.
+
+  **A propriedade é escrita como contenção porque isolamento não é obtenível aqui.** A formulação que se gostaria de escrever — *código sob controle de um Pull Request não pode exercer autoridade de publicação* — seria violada pela implementação inicial no primeiro dia, e uma propriedade durável que nasce inviolável apenas no papel não é garantia. O que se preserva do intento original está em C9 e em D9 — código não revisado não alcança segredo de produção — e o que **não** se preserva está declarado em §6.
+
+  Consequência que dispensa uma definição formal de "ambiente": a propriedade fala de autoridade e de raio de impacto, que são verificáveis sem que se precise decidir se o executor de build "é" ou "não é" um ambiente.
 
 - **C8 — Segredos são roteados por função, e cada função tem regra própria.**
 
@@ -90,11 +100,33 @@ Estas propriedades são a decisão. Qualquer implementação — atual ou futura
   2. **Segredo de build** — lido durante o prerender. Governado por **D9** e por **C9**.
   3. **Credencial de automação** — detida pelo pipeline, autoriza publicar ou alterar ambiente. Governada por **C7**.
 
+  A fronteira entre C7 e D9 é a que merece atenção, porque a implementação pode confundi-las. **Worker separado e Wrangler Environments atendem a D9 — separam segredos e bindings entre ambientes da aplicação — e não atendem a C7**, porque a autoridade de build permanece de conta e alcança todos os Workers dela. Montar a segmentação de D9 e concluir que C7 foi endereçada seria o erro mais provável deste desenho, e está registrado para que não seja cometido.
+
   A propriedade existe para impedir que "D9 já cobre" seja dito sobre a terceira classe. **D9 governa a segregação de segredos entre ambientes da aplicação; autoridade de automação governa quem pode publicar ou alterar um ambiente.** São eixos diferentes: um é sobre o que o código em execução consegue ler, o outro sobre quem consegue mudar o que está em execução. O mecanismo concreto de D9 permanece no gatilho 3 do ADR-0006 e **não é escolhido aqui**; a terceira classe é decidida agora porque é este ADR que a criaria.
 
 - **C9 — Nenhum segredo de build sobrevive dentro do artefato publicado.** O artefato é pré-renderizado, estático e público (ADR-0006 §2). Um segredo lido durante o prerender e embutido na saída não está protegido — está publicado. D9 diz onde o segredo mora; C9 diz o que o build pode fazer com ele.
 
-### 2. Reconstruir, e não promover
+### 2. Três estados, e a equivalência que realmente se garante
+
+O fluxo não tem dois estados, tem três, e eles podem divergir:
+
+| Estado | Constrói | Responde a |
+|---|---|---|
+| **Verificação** | a referência de merge entre o head do Pull Request e a base **no momento da execução** | *o candidato a integração passa?* |
+| **Preview** | o **head da branch** do Pull Request | *como está o que eu escrevi?* |
+| **Produção** | o **commit de squash** criado em `main` no merge | *o que está publicado?* |
+
+As três árvores coincidem quando a base não avançou desde que a branch nasceu. Quando avançou, o preview mostra uma árvore que nem a verificação nem a produção constroem.
+
+**A equivalência garantida é, portanto, deliberadamente modesta:**
+
+- **mesmo processo de build** e **mesmas entradas declaradas** (C5) nos três estados;
+- **cada estado é rastreável a um commit identificável** (D4);
+- **identidade de árvore apenas quando a base não avançou** — não é garantida, e não é reivindicada.
+
+Escrever "o mesmo commit é construído três vezes" seria falso; escrever que as três árvores são idênticas seria falso com mais frequência. O que sustenta a confiança entre elas é C5, e não coincidência de artefato.
+
+### 2.1. Reconstruir, e não promover
 
 A pergunta — se produção deve promover o artefato já construído no preview ou reconstruir o commit — é decidida pelos fatos do repositório, e não por preferência.
 
@@ -119,9 +151,9 @@ O argumento é uma propriedade, não conveniência: é a única forma levantada 
 
 Três consequências são parte da decisão, e não notas de rodapé:
 
-- **O mesmo commit é construído duas vezes** — uma vez para verificar, outra para publicar. Aceito pelo argumento de §2: a equivalência vem de entradas controladas, não de identidade de artefato.
+- **Cada mudança é construída três vezes, sobre três estados que podem divergir** — verificação sobre a referência de merge, preview sobre o head da branch, produção sobre o commit de squash. Aceito pelo argumento de §2: o que se garante é processo e entradas, não identidade de árvore.
 - **A verificação da Cloudflare não é uma verificação obrigatória de merge.** A armadilha do build pulado que não reporta check torna-a inelegível por C2. O portão é o CI; a falha de publicação é capturada por C6. Isso responde, invertida, a pergunta que o ADR-0006 §5 deixou aberta: **o deploy não bloqueia o merge.**
-- **Nenhuma credencial da Cloudflare existe no repositório**, de modo que C7 é satisfeita por construção no eixo de publicação — a mesma manobra de D7 no ADR-0006.
+- **A autoridade de publicação existe e é de conta, em qualquer das formas avaliadas.** A plataforma gera automaticamente um token com `Workers Scripts: edit` na conta, não restringível a um Worker, e o usa no mesmo trabalho que executa código do repositório. A vantagem da forma escolhida sobre o deploy pelo Actions é mais estreita do que "a credencial não é criada": é que **a credencial não é duplicada num segundo fornecedor** e permanece revogável e substituível no lugar onde a autoridade já reside. Essa é a única vantagem de segurança reivindicada, e ela é pequena.
 
 O mecanismo de C3 é o comportamento padrão do evento `pull_request`, que já executa sobre a referência de merge. A corrida residual — a base avançar **depois** que a verificação rodou — é **aceita**, com C6 e D5 como contenção; o modo estrito, que exigiria branch atualizada antes do merge, fica reservado a gatilho. Merge queue não é alternativa neste repositório.
 
@@ -142,23 +174,31 @@ Nada é configurado por esta decisão.
 
 **Lint é respondido, não adiado: não agora.** O ADR-0005 §4 mandou o assunto para cá; o ADR-0002 condicionou o único lint relevante — o da escala de spacing — a **drift observado**, e não há código para driftar. É o exemplo trabalhado de C1: existe origem candidata, mas a origem é ela própria condicional, de modo que a verificação não deriva hoje. Nasce quando a necessidade for documentada.
 
-### 5. Estreitamento explícito de D3
+### 5. Política de forks, e estreitamento explícito de D3
 
-**Pull Request vindo de fork não recebe preview automático.** Nenhuma das formas levantadas o oferece: a plataforma não constrói preview para fork, e o caminho por Actions não tem segredos disponíveis em fork — sendo que a solução ingênua para contorná-lo é uma via conhecida de exposição de credencial.
+**Preview de código vindo de fork permanece desabilitado enquanto não existir mecanismo cuja fronteira de confiança seja demonstradamente compatível com C7.**
 
-O limite é registrado aqui, e não por reescrita do ADR-0006 (`conventions.md` §10), no mesmo espírito de ADR-0006 §4 e de T8: declarar o que não se cobre em vez de deixar a lacuna implícita. **Não é falha de C7** — é, ao contrário, a fronteira que a torna trivial nesse eixo.
+É **política do projeto, e não observação sobre o fornecedor**. A distinção é deliberada e corrige uma fragilidade: a documentação da plataforma registra que Pull Requests de fork não geram preview, mas registra isso para o produto vizinho da mesma integração Git, e não para a implementação usada aqui. Uma política que dependesse desse comportamento seria uma garantia sustentada por algo não confirmado — e que passaria a valer o contrário no dia em que o fornecedor mudasse de ideia, **sem que ninguém decidisse nada**.
+
+Escrita como política, ela se comporta bem nos três cenários: se a plataforma não constrói fork, a política é satisfeita sem esforço; se passar a construir, habilitar continua sendo decisão humana afirmativa; e se migrarmos de fornecedor, a política viaja junto.
+
+**Consequência:** D3 — *toda mudança candidata é observável em ambiente próprio* — passa a valer para Pull Request originado no próprio repositório. O estreitamento é registrado aqui, e não por reescrita do ADR-0006 (`conventions.md` §10), no mesmo espírito de ADR-0006 §4 e de T8. Contribuição externa via fork é gatilho de reavaliação, não impedimento permanente.
 
 ### 6. Limites conhecidos
 
 Registrados para não serem redescobertos como surpresa. Nenhum altera a decisão.
 
+- **A execução de build de código não revisado alcança autoridade de conta, e isso não é contornável nesta plataforma.** É o limite mais relevante do documento. O token gerado pela plataforma tem `Workers Scripts: edit` na conta e não é restringível a um Worker; o comando de deploy é uma string no dashboard, mas resolve por `node_modules`, que o repositório controla. Portanto **comprometer um build de preview equivale a comprometer os Workers da conta, inclusive produção** — e nenhuma das formas avaliadas evita isso, porque a autoridade de publicação é de conta em todas elas. As contenções reais são três, e são de escopo e não de isolamento: só o mantenedor empurra branch, fork não gera preview (§5), e a conta hospeda apenas este projeto. **O vetor realista não é contribuidor hostil — é dependência comprometida executando no build.** Gatilhos 10 e 11.
+
+- **Não está documentado se o comando de build e o comando de deploy compartilham o mesmo ambiente de processo.** Não altera o limite acima, porque o vetor não depende de ler o token: depende de o código do repositório determinar o que o passo de deploy executa.
+
 - **Parte da configuração de build só existe no dashboard do fornecedor.** É a violação parcial de C5 que a própria redação de C5 absorve, e é o preço da forma escolhida. Mitigação: manter os campos como indireção fina, de modo que a substância permaneça versionada, e registrá-los em `conventions.md`.
-- **A ausência de preview para fork é documentada para o produto vizinho da mesma integração Git, e não para Workers Builds.** Enquanto não for confirmada, **não deve ser tratada como fronteira de segurança**. Hoje o risco é nulo porque não há segredo algum; a confirmação é pré-condição do primeiro segredo de build, junto da pergunta seguinte.
+- **O comportamento do fornecedor diante de Pull Request de fork não está confirmado para esta implementação.** A ausência de preview está documentada para o produto vizinho da mesma integração Git. **Por isso §5 é política do projeto e não observação sobre o fornecedor** — mas a distinção só protege se a política for efetivamente verificada na configuração, e não presumida a partir do comportamento observado.
 - **Não está documentado se variáveis e segredos de build do dashboard alcançam builds de branch não-produtiva.** É a lacuna de D9 na forma desta implementação, e é a incerteza mais consequente do conjunto. Como D9, é hoje vacuamente satisfeita e vira pré-condição, não consequência.
 - **O comportamento de produção após um build falho não é afirmado na documentação.** É implicado pelo modelo de versões e deployments, mas C6 depende dele e a confirmação só acontece no primeiro deploy real.
 - **A retenção de logs de build do fornecedor não foi encontrada.** D4 delegou a política de retenção a este ADR, e ela permanece aberta até a observação no primeiro deploy.
 - **O comportamento ao esgotar os build minutes do plano gratuito não está documentado.** Relevante a D8, que exige parada dura em vez de faturamento. O ADR-0006 já havia registrado incerteza vizinha, e ela continua aberta.
-- **Duas verificações independentes constroem o mesmo commit**, e um desalinhamento entre os dois ambientes de build é possível. C5 é a contenção; ela reduz a probabilidade, não a elimina.
+- **Três construções independentes, em dois ambientes de build distintos** (§2). Desalinhamento entre os ambientes é possível, e divergência de árvore entre os três estados é esperada sempre que a base avançar. C5 é a contenção; ela reduz a probabilidade de divergência de *processo*, e não elimina a divergência de *árvore*, que §2 declara não garantir.
 - **G6 nomeia agentes de IA, e um workflow não é um agente.** A proibição de integrar, dar push em `main`, alterar proteção e manipular tags deve ser lida como aplicável a qualquer ator não-humano. Hoje a proteção de `main` já a garante mecanicamente.
 
 ### 7. Fora do escopo desta decisão
@@ -179,7 +219,7 @@ Registrados para não serem redescobertos como surpresa. Nenhum altera a decisã
 
 - **Fecha as três delegações abertas de uma vez.** "Configuração concreta de CI" (ADR-0004 §4, ADR-0005 §4) e "onde o build é executado" (ADR-0006 §5) deixam de ser pendências nomeadas em documentos aceitos.
 - **Converte T11 de promessa parcial em mecanismo com data.** A suíte passa a integrar os critérios de merge no momento em que existir — e o momento está escrito.
-- **C7 é satisfeita por construção, e não por configuração cuidadosa.** A credencial de publicação não é criada; a ausência de OIDC na plataforma passa de risco assumido a fato irrelevante. É o mesmo desfecho que D7 obteve no ADR-0006.
+- **C7 declara o raio de impacto em vez de prometer isolamento.** A propriedade que se gostaria de escrever seria violada no primeiro dia, e o valor de escrevê-la assim é que a contenção que de fato existe — limitar a conta — é verificável, enquanto "código de PR não exerce autoridade" não seria. Segue o precedente de A1 no ADR-0007, que recusou a redação que nasceria incompatível com qualquer implementação possível.
 - **C1 dá forma verificável à recusa de checks por tradição**, sem transformar o diretório de ADRs em catálogo de verificações. O lint é a demonstração: a propriedade explica por que ele não entra hoje, em vez de apenas proibi-lo.
 - **A escolha da forma eliminou duas incertezas em vez de acumulá-las.** Estabilidade do nome da verificação do fornecedor e modo de falha das políticas de ambiente deixaram de importar, porque a verificação do fornecedor não é obrigatória e não há segredo de ambiente a proteger.
 - **C4 resolve uma questão que teria sido decidida em silêncio.** Sem ela, promover o artefato de preview seria a escolha mais natural e a mais barata — e teria quebrado D4 sem que nada sinalizasse.
@@ -188,13 +228,15 @@ Registrados para não serem redescobertos como surpresa. Nenhum altera a decisã
 
 ### Contras e riscos
 
-- **A implementação inicial não satisfaz C5 integralmente.** É o contra mais relevante: parte das entradas de build vive fora do controle de mudanças, e alterá-las não passa por Pull Request nem por leitura humana — exatamente o que G2 e G3 existem para impedir. A propriedade absorve o fato em vez de negá-lo, o que é honesto e também é uma concessão real.
-- **Duas superfícies operacionais em vez de uma.** Diagnosticar uma falha pode exigir olhar em dois lugares, e uma publicação pode falhar depois que todas as verificações passaram. É o preço de não criar a credencial.
+- **Preview automático de código não revisado é incompatível com autoridade de publicação limitada, nesta plataforma.** É o contra mais relevante da decisão, e ele não é escolha entre formas de CI/CD: é a colisão entre D3, que o ADR-0006 aceitou, e a granularidade de permissões do fornecedor. A decisão preserva D3 e declara o custo, em vez de silenciar um dos dois. A alternativa — abrir mão do preview automático — está registrada em Alternativas e permanece disponível se o gatilho 10 for acionado.
+
+- **A implementação inicial não satisfaz C5 integralmente.** É o segundo contra mais relevante: parte das entradas de build vive fora do controle de mudanças, e alterá-las não passa por Pull Request nem por leitura humana — exatamente o que G2 e G3 existem para impedir. A propriedade absorve o fato em vez de negá-lo, o que é honesto e também é uma concessão real.
+- **Duas superfícies operacionais em vez de uma.** Diagnosticar uma falha pode exigir olhar em dois lugares, e uma publicação pode falhar depois que todas as verificações passaram. É o preço de manter a verificação versionada sem duplicar a credencial num segundo fornecedor.
 - **A corrida residual de C3 é aceita, não resolvida.** `main` pode quebrar após o merge de um Pull Request verde. A probabilidade é baixa com um mantenedor e um Pull Request por vez, e a contenção é C6 mais D5 — mas o risco é real e foi escolhido em vez de eliminado.
 - **C2 depende de julgamento.** "Diagnosticável" e "reexecutável sem alterar o código" são avaliados por leitura, não por ferramenta — a mesma fragilidade já aceita em ADR-0002, ADR-0003 e ADR-0005.
 - **A distinção de C8 depende de disciplina.** Nada impede tecnicamente que um segredo seja introduzido na classe errada; a garantia é mantida por review, no regime em que ADR-0008 mantém PG5.
 - **Parte do levantamento envelhece rápido.** Limites de plano e o estado do suporte a OIDC são o insumo menos durável. Por isso nenhuma propriedade depende de um número, e mudança de plano é gatilho, não premissa.
-- **Quatro incertezas permanecem abertas**, duas delas na fronteira de confiança. Elas não bloqueiam a decisão porque não há segredo algum hoje, mas bloqueiam a afirmação de que a fronteira está verificada.
+- **As incertezas registradas em §6 permanecem abertas**, duas delas na fronteira de confiança. Elas não bloqueiam a decisão porque não há segredo algum hoje, mas bloqueiam a afirmação de que a fronteira está verificada — e a fronteira que §6 declara conhecida é mais estreita do que a que se gostaria de ter.
 - **A forma escolhida é mais difícil de explicar do que qualquer uma das puras.** Um leitor futuro que encontre verificação num lugar e publicação em outro precisará deste documento para entender por quê — e a explicação não é "melhor das duas", é uma propriedade específica sobre autoridade.
 
 ## Gatilhos de reavaliação
@@ -209,15 +251,19 @@ Cada gatilho é uma necessidade ou problema concreto e observável.
 6. **Verificação obrigatória bloquear o fluxo por instabilidade** — sinal de que a promoção violou C2, e de que o conjunto obrigatório está errado.
 7. **Consumo de build minutes deixar de ser irrelevante**, ou o comportamento no limite se revelar diferente de parada dura — reabre D8.
 8. **A configuração fora do controle de mudanças crescer além de indireção fina** — momento em que C5 deixa de absorver o fato e passa a ser violada, exigindo revisão da forma.
-9. **Deixar de haver um único mantenedor** — muda as premissas de C2 e C3, e torna viável o que ADR-0004 já registrou como inviável hoje.
+9. **Deixar de haver um único mantenedor** — muda as premissas de C2 e C3, e torna viável o que ADR-0004 já registrou como inviável hoje. Atinge também C7, cuja contenção depende hoje de quem consegue empurrar branch.
+10. **A plataforma passar a oferecer autoridade de publicação restrita a um recurso** — permite escrever C7 como isolamento em vez de contenção, e reabre o preview de fork de §5.
+11. **A conta passar a hospedar recurso alheio ao projeto** — quebra a terceira exigência de C7 imediatamente, e é a forma mais provável de a propriedade ser violada sem que ninguém perceba, porque é uma ação fora do repositório.
 
 Reavaliação gera **novo ADR**. Este documento não é reescrito para alterar a decisão histórica, conforme `conventions.md` §10.
 
 ## Alternativas consideradas
 
 - **Automação nativa da plataforma isolada**, sem nada declarado no repositório — a forma mais simples, sem arquivo de workflow para manter e com preview e publicação prontos. Descartada por dois motivos que atingem garantias, não ergonomia. Primeiro, **o portão não seria governado pelo portão**: o comando de build e as variáveis vivem fora do controle de mudanças, de modo que alterar o mecanismo que impõe G2 e G3 não passaria por Pull Request nem por leitura humana — e essas entradas influenciam o artefato, o que D1 exige que seja identificável e controlado. Segundo, **o build seria o único sinal**: typecheck, teste e falha de infraestrutura colapsariam em "build failed", contra C2, cuja consequência é agravada pela proteção de `main` alcançar administradores. A forma escolhida preserva a maior parte das vantagens desta e paga apenas pelo que ela não pode dar.
-- **Verificação e publicação inteiramente no GitHub Actions** — a alternativa mais forte em C5, com tudo declarado em arquivo versionado e passando por Pull Request, e com verificações granulares e individualmente reexecutáveis. Descartada porque **obriga a criar uma credencial de publicação de longa duração**: a plataforma não oferece OIDC nem *trusted publishing*, e o pedido está aberto há nove meses sem resposta oficial. A mitigação existe e é documentada — token escopado, com prazo de validade, atrás de um ambiente restrito à branch de produção —, mas ela **governa** um risco que a alternativa escolhida **não cria**. Registra-se ainda que esta forma não é melhor em preview de fork: sem segredos disponíveis, o preview de fork é igualmente impossível, e o caminho usual para contorná-lo é uma via conhecida de exposição de credencial. **Seria a recomendação no dia em que o gatilho 5 for acionado.**
+- **Verificação e publicação inteiramente no GitHub Actions** — a alternativa mais forte em C5, com tudo declarado em arquivo versionado e passando por Pull Request, e com verificações granulares e individualmente reexecutáveis. Descartada porque **duplica a credencial de publicação num segundo fornecedor sem reduzir a autoridade**: a plataforma não oferece OIDC nem *trusted publishing*, e o pedido está aberto há nove meses sem resposta oficial. A mitigação documentada — token escopado, com prazo de validade, atrás de um ambiente restrito à branch de produção — é real, mas **não alcança o preview**: um trabalho em branch de Pull Request não casa com a política de branch e portanto não obtém o segredo, o que significa que esta forma só é mais segura na medida em que **deixa de produzir preview de Pull Request**, contra D3. Registra-se ainda que esta forma não é melhor em preview de fork: sem segredos disponíveis, o preview de fork é igualmente impossível, e o caminho usual para contorná-lo é uma via conhecida de exposição de credencial. **Seria a recomendação no dia em que o gatilho 5 for acionado.**
 - **Promover a produção o artefato construído no preview**, em vez de reconstruir — daria identidade byte a byte entre o que foi revisado e o que foi publicado, que é a formulação mais intuitiva de "mesmo código". Descartada por §2: com squash e remoção de branch, o commit que produziu esse artefato não existe em `main` e é inalcançável no repositório depois do merge, o que tornaria a rastreabilidade de produção dependente da plataforma, contra D4. Nenhuma propriedade aceita exige identidade de artefato; D3 exige o mesmo **processo**.
+- **Abrir mão do preview automático de Pull Request**, publicando preview apenas a partir de código já revisado — a única forma avaliada que permitiria escrever C7 como isolamento real, já que nenhum código não revisado executaria com autoridade. Descartada porque **colide frontalmente com D3**, propriedade aceita no ADR-0006, que existe para preencher o slot vazio do ADR-0004 §2 e para dar substância à leitura humana de G3 nas mudanças visuais que T8 declara não cobrir. Trocar uma garantia aceita por outra não é decisão deste ADR tomar em silêncio; permanece disponível pelo gatilho 10 e é o caminho a considerar se o perfil de risco mudar.
+
 - **Merge queue** para satisfazer C3 de forma completa — resolveria a corrida residual sem depender de branch atualizada. **Eliminada por fato**: exige repositório pertencente a uma organização, e este pertence a uma conta de usuário.
 - **Modo estrito, exigindo branch atualizada antes do merge** — satisfaria C3 sem lacuna. Descartado nesta fase por atrito desproporcional a um mantenedor único com um Pull Request por vez, quando o mecanismo padrão já verifica a referência de merge e cobre o caso dominante. Permanece disponível pelo gatilho 1.
 - **Adotar lint agora**, aproveitando a montagem do pipeline — seria barato e é o que a maioria dos projetos faz nesta etapa. Descartado por C1 e pelo ADR-0002, que condicionou o lint relevante a drift observado: não há código, não há drift, e uma verificação sem origem derivável é precisamente o que C1 recusa.
