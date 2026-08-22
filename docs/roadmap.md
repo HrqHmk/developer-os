@@ -56,7 +56,7 @@ O Playground ocupava originalmente a Fase 3. Ele foi movido para o fim e **o nú
 
 ## Fase 6 — Playground IA
 
-Área interativa do portfólio com experiências que demonstram decisões concretas de engenharia de IA. A forma é **deliberadamente indecidida**: os itens abaixo são candidatos, não escopo fechado, e a primeira experiência será escolhida pelo seu valor como demonstração de engenharia. A estratégia permanece pendente em `architecture.md` §12.
+Área interativa do portfólio com experiências que demonstram decisões concretas de engenharia de IA. A forma é **deliberadamente indecidida**: os itens abaixo são candidatos, não escopo fechado, e a primeira experiência será escolhida pelo seu valor como demonstração de engenharia. A estratégia é governada pelo ADR-0008 (propriedades PG1–PG10): nada do Playground é construído antes de existir uma experiência concreta escolhida (PG10), e demonstrar isolamento de raio de explosão é pré-condição da primeira experiência pública (PG1).
 
 - [ ] Área de experimentos
 - [ ] Primeira experiência
