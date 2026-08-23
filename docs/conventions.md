@@ -34,7 +34,8 @@ Este documento não introduz decisões arquiteturais. Ver §8 para o fluxo de at
 
 - **pnpm** é o gerenciador de pacotes do projeto, declarado em `packageManager` no `package.json`. Instalação em CI e em máquina nova usa `pnpm install --frozen-lockfile`, nunca resolução implícita a partir do `lockfile`.
 - A versão do **Node** é fixada por `.nvmrc`, na raiz do repositório. A linha ativa (LTS) é preferida sobre a de manutenção, para não expirar durante a Fase 1 do roadmap.
-- `pnpm-workspace.yaml` é **versionado**: além de declarar o workspace, ele registra `allowBuilds` (scripts de post-install liberados para dependências como `esbuild` e `workerd`, exigidos pelo Vite e pelo Wrangler) e exclusões da política de `minimumReleaseAge` do pnpm para pacotes cuja versão pinada é recente — sem ele, `pnpm install --frozen-lockfile` não reproduz o mesmo resultado em outra máquina.
+- `pnpm-workspace.yaml` é **versionado**: além de declarar o workspace, ele registra `allowBuilds` (scripts de post-install liberados para dependências como `esbuild` e `workerd`, exigidos pelo Vite e pelo Wrangler).
+- **`minimumReleaseAgeExclude`**, no mesmo arquivo, é exceção à política `minimumReleaseAge` do pnpm — a partir da 11.x, o pnpm recusa por padrão pacotes publicados há menos de 1440 minutos (24h), **mesmo sob `--frozen-lockfile`**: a instalação congelada reaplica essa verificação a cada entrada do lockfile (o passo que `--trust-lockfile` é quem pula). Confirmado por teste local: removida a exclusão, `pnpm install --frozen-lockfile` falha com `ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION` para os doze pacotes `@tanstack/*` pinados a versões publicadas horas antes do scaffold. A lista não é preventiva — existe porque a instalação falhava sem ela — e volta a ficar vazia se essas versões forem atualizadas para builds com mais de 24h de idade no momento do `pnpm install`.
 
 ### TypeScript
 
