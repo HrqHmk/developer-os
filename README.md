@@ -6,9 +6,9 @@ Mais do que um portfólio, é um ecossistema AI-first onde documento decisões a
 
 ## Estado atual
 
-O projeto está na fase de especificação. **Não há aplicação neste repositório ainda** — o scaffold inicial do Create Next App foi removido, e a estrutura do TanStack Start será criada em trabalho próprio.
+O scaffold do TanStack Start está criado — TanStack Start + React + TypeScript (ADR-0001), tipando, buildando e produzindo artefato pré-renderizado, servido como ativo estático (ADR-0006 §2). Estilização, tokens do design system, pipeline de conteúdo e páginas do roadmap ainda não existem; entram em issues próprias.
 
-O que existe hoje é a base documental que governa o que vier a ser construído.
+A base documental continua governando o que vier a ser construído.
 
 ## Documentação
 

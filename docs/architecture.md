@@ -95,7 +95,7 @@ developer-os/
 │   └── adr/                # Arquivos ADR (0001-titulo.md)
 │
 ├── src/
-│   ├── app/                # Camada de rotas/páginas
+│   ├── routes/             # Camada de rotas/páginas (roteamento baseado em arquivo, TanStack Router)
 │   ├── components/         # Componentes de UI isolados
 │   ├── content/            # Conteúdo, schemas e pipeline (ver ADR-0003)
 │   ├── lib/                # Utilitários e helpers puros
@@ -109,7 +109,7 @@ developer-os/
 
 Testes unitários e de integração ficam **co-locados** com o código que verificam, dentro de `src/`, e não em diretório próprio. `tests/` é reservado ao E2E, que não tem código-fonte correspondente para acompanhar. Ver ADR-0005 e `conventions.md` §12.
 
-A estrutura definitiva dependerá da stack escolhida.
+Esta é a estrutura-alvo: diretórios nascem quando há código que os justifique (`architecture.md` §11), não antecipadamente. `src/routes/` é o único já criado pelo scaffold da issue #16 — os demais aparecem quando a necessidade correspondente (ADR-0002, ADR-0003, primeira integração) existir.
 
 ---
 
