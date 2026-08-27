@@ -347,3 +347,105 @@ Sem enforcement automatizado nesta fase, coerente com o precedente de ADR-0002 (
 - A suíte é executável por **um comando único**, determinística e **sem acesso à rede** (T6, T11).
 - Sua execução integra os critérios de merge de G7.3 conforme a verificação automatizada se torne disponível (T11). Enquanto não houver CI, a execução depende de disciplina local — limitação registrada nos contras do ADR-0005.
 - **Sem threshold de cobertura**, global ou por diretório (T3).
+
+---
+
+## 13. CI/CD
+
+Convenções derivadas do ADR-0009. As propriedades duráveis (C1–C9) estão no ADR; esta seção registra **a mecânica que as realiza** e os campos que o ADR-0009 §3 deferiu explicitamente para "quando o pipeline for efetivamente configurado". Trocar qualquer item desta seção não exige novo ADR, desde que C1–C9 continuem satisfeitas.
+
+### 13.1 Onde a verificação vive
+
+- Arquivo único: **`.github/workflows/ci.yml`**, workflow **`CI`**.
+- Dois jobs — **`typecheck`** e **`build`** — cada um produzindo um check run de mesmo nome.
+- **São jobs separados, e não steps de um mesmo job.** C2 exige verificação granular e individualmente reexecutável, e o ADR-0009 §3 recusa a alternativa nativa precisamente por "colapsa typecheck, teste e falha de infraestrutura num único sinal". A duplicação dos steps de preparação é o preço, e é deliberada.
+- O nome do check run é o `name` do job, **fixado explicitamente**. A proteção de branch do GitHub exige **contexts por nome** (`typecheck`, `build`) — não uma execução específica ligada ao evento que a disparou. Renomear um job não quebra a proteção em silêncio: se o context exigido deixar de ser reportado, o comportamento é *fail-closed* — o GitHub continua aguardando aquele context e o merge fica bloqueado, visivelmente, até o nome ser corrigido ou o context trocado na proteção.
+
+### 13.2 De qual garantia cada verificação deriva (C1)
+
+| Verificação | Origem |
+|---|---|
+| `typecheck` (`tsc --noEmit`) | ADR-0001 (TypeScript como stack) + ADR-0005 T1 (tipagem cobre estrutura e contrato de dados). Nomeada em ADR-0009 §4. |
+| `build` (`vite build`) | ADR-0003 P2/P4 (conteúdo descoberto, validado e processado em build) + ADR-0005 T1. Nomeada em ADR-0009 §4. |
+
+O conjunto **não é fechado**. C1 define como uma verificação entra, não qual é o conjunto para sempre: uma verificação nova entra por esta tabela, com sua origem em uma linha. Sem origem derivável, não entra — é por isso que não há lint (ADR-0009 §4).
+
+### 13.3 Gatilhos, e por que os dois não têm o mesmo papel
+
+A proteção de branch do GitHub exige **contexts por nome** — `typecheck`, `build` — e não uma execução específica ligada ao evento que a disparou. Quando os dois forem promovidos a obrigatórios (Bloco B), o merge espera que esses contexts estejam satisfeitos **no commit sendo mergeado** — o head do Pull Request (ou a referência de merge). É a execução disparada por `pull_request` que reporta nesse commit, e é ela quem satisfaz o requisito.
+
+| Gatilho | Papel |
+|---|---|
+| `pull_request` | **Roda antes do merge**, sobre a referência de merge entre o head do Pull Request e a base (mecanismo de C3). É esta execução que reporta os contexts que o merge espera. |
+| `push` em `main` | **Roda depois do merge já ter acontecido**, sobre o commit de squash em `main` — um commit diferente do que foi avaliado para o merge. Reporta contexts de mesmo nome, mas não há, nesse momento, nenhuma decisão de merge para influenciar: é execução adicional, para observabilidade. |
+
+Por que o run em `main` existe, já que não gateia nada:
+
+- o commit publicado em produção **nasce no merge** (squash, §11.4) e nenhuma verificação o viu;
+- a build de produção roda `vite build`, e **não** `tsc` — sem este run, uma regressão de tipagem em `main` passaria despercebida até o Pull Request seguinte;
+- ele torna G1 ("`main` sempre publicável") **observável** em vez de afirmada, e é o que faz o **gatilho 1 do ADR-0009** — `main` quebrar depois de um Pull Request verde — detectável. Gatilho que ninguém consegue observar não dispara.
+
+**O que ele não é.** Não é tentativa de eliminar a corrida residual de C3 — a base avançar depois que a verificação rodou. Essa corrida é **aceita** pelo ADR-0009 §3, com C6 e D5 como contenção. Este run a torna visível depois do fato; não a previne.
+
+**O run de `main` não precisa de nenhuma exclusão explícita da proteção obrigatória.** Ele reporta sobre um commit que já foi mergeado, não sobre o commit que um merge futuro avalia — estruturalmente, não há como ele gatear algo que já aconteceu.
+
+### 13.4 Determinismo da instalação
+
+Cada job executa, nesta ordem: checkout → Node → pnpm → instalação congelada → script.
+
+| Entrada | De onde vem | Por quê |
+|---|---|---|
+| Versão do **pnpm** | `packageManager` do `package.json`, via **Corepack** | C5 e §2. Nenhuma versão de pnpm é escrita no workflow, e o Corepack verifica o sufixo `+sha512…` do campo — o hash existe para ser verificado. |
+| Versão do **Node** | `.nvmrc`, via `node-version-file` do `actions/setup-node` | C5 e §2. Nenhuma versão de Node é escrita no workflow. O ADR-0009 registra, a partir da documentação oficial da Cloudflare, que Workers Builds também lê `.nvmrc`/`.node-version` do repositório — **documentado pelo fornecedor, ainda não observado para a combinação Node 24.19.0 + pnpm 11.22.0 deste projeto** (incerteza 2 da Issue #20, a confirmar no Bloco C). |
+| **Dependências** | `pnpm install --frozen-lockfile` | §2 e C5. Lockfile fora de sincronia com `package.json` **deve** falhar o job, e falha: `ERR_PNPM_OUTDATED_LOCKFILE`. |
+| **Actions** | pinadas por **SHA de commit completo**, com a tag legível no comentário ao lado | §2: uma tag é mutável, e referência mutável não é versão fixada. Vale inclusive para as ações da própria organização `actions`. |
+
+**Sem cache, e sem chave para desligá-lo.** O `actions/setup-node` tem `package-manager-cache` com padrão `true`, mas seu cache automático só liga quando `packageManager` declara **npm**; aqui declara pnpm, de modo que não há cache. Declarar `package-manager-cache: false` seria configurar um comportamento que já está desligado. Cache de build permanece fora de escopo (ADR-0009 §7) enquanto não houver problema medido.
+
+### 13.5 Corepack e a versão de Node
+
+O caminho de instalação do pnpm depende do **Corepack**, distribuído junto com o Node **até a linha 24** e **removido da distribuição a partir da 25**.
+
+- `.nvmrc` está hoje em `24.19.0` — linha LTS, que §2 já manda preferir.
+- **Subir o `.nvmrc` para Node 25 ou superior exige trocar o mecanismo de instalação do pnpm no mesmo Pull Request**, sob pena de quebrar os dois jobs.
+- A quebra seria barulhenta e aconteceria no Pull Request, não em produção. Ainda assim é previsível, e por isso fica registrada aqui em vez de ser redescoberta.
+
+A alternativa conhecida é `pnpm/setup`, sucessora oficial de `pnpm/action-setup` para pnpm 11+. Ela custa uma ação de terceiro a mais e não verifica o hash de `packageManager`; e derivar o Node dela exigiria `devEngines.runtime` no `package.json`, criando **segunda fonte de verdade** para uma versão que o `.nvmrc` já fixa — e que, pela documentação do fornecedor citada em §13.4, o Workers Builds também lê de lá.
+
+### 13.6 `minimumReleaseAge` na CI e no build do fornecedor
+
+**Comprovado neste repositório.** `pnpm install --frozen-lockfile` reaplica o gate de 24h do pnpm 11 a cada entrada do lockfile — é o mecanismo de instalação do próprio pnpm, não um comportamento específico de CI. O job `typecheck` do PR #21 reportou `✓ Lockfile passes supply-chain policies`, confirmando que o gate roda e passa para as versões hoje listadas em `minimumReleaseAgeExclude`.
+
+**Documentado pelo fornecedor, ainda não observado neste projeto.** O ADR-0009 registra que Workers Builds lê `package.json` e o lockfile do repositório e instala a partir deles, o que sugere o mesmo gate. A Issue #20 lista a combinação Node 24.19.0 + pnpm 11.22.0 sob Workers Builds como incerteza aberta — este documento não a trata como confirmada; a confirmação pertence ao Bloco C, após o primeiro deploy real.
+
+**Consequência operacional, independente da confirmação:** fixar uma dependência publicada há menos de 24h quebra a instalação em qualquer lugar onde `--frozen-lockfile` rode sob essa política, e o desbloqueio é a entrada correspondente em `minimumReleaseAgeExclude` (§2), **no mesmo Pull Request que introduz o pin**. Se o primeiro deploy revelar comportamento diferente no Workers Builds, o registro vai para o Bloco C, não para esta seção.
+
+A lista atual existe porque a instalação local e a de CI falhavam sem ela, e não por precaução; com aquelas versões já passadas das 24h, ela é hoje inerte e volta a ficar vazia quando esses pacotes forem atualizados. A regra permanece porque o próximo pin recente a reativa.
+
+### 13.7 Campos que só existem no dashboard do fornecedor
+
+Esta é a **principal concessão de C5**, prevista pela própria redação da propriedade e registrada no ADR-0009 §6: parte da configuração de build do Workers Builds não é versionável. A mitigação é mantê-los como **indireção fina** — a substância permanece no repositório — e registrá-los aqui.
+
+A tabela é o **contrato que o dashboard deve espelhar**. Os valores são determinados pelo repositório e pelo ADR-0009 §4; o ato de configurá-los é ação humana, fora do diff.
+
+| Campo (dashboard) | Valor | Indireção para |
+|---|---|---|
+| Branch de produção | `main` | G1 e G2; ADR-0009 §4 |
+| Builds de branch não-produtiva | **habilitados** | D3 — são desligados por padrão, e D3 depende deles |
+| Root directory | raiz do repositório | — |
+| Build command | invoca o script `build` do `package.json` | o comando real é versionado; o campo apenas o chama |
+| Deploy command (produção) | padrão do fornecedor | ADR-0009 §3 |
+| Deploy command (branch não-produtiva) | padrão do fornecedor — cria versão sem promover a produção | ADR-0009 §3 e D3 |
+| Build variables e secrets | **nenhuma** | não existe segredo no projeto; D9 é hoje vacuamente satisfeita |
+
+**Nenhuma entrada capaz de alterar o artefato pode existir apenas fora do controle de mudanças sem estar registrada** (C5). Se esta tabela crescer além de indireção fina, o gatilho 8 do ADR-0009 foi acionado.
+
+O **check run do fornecedor nunca integra a verificação obrigatória de merge**: build pulado não gera check run, e verificação obrigatória que não reporta trava o repositório sob `enforce_admins`. É inelegível por C2 (ADR-0009 §3), e a falha de publicação é capturada por C6.
+
+### 13.8 Barra final
+
+O ADR-0006 §4 registra a interação: o `autoSubfolderIndex` do TanStack Start combinado com o `html_handling` padrão do Workers produz **307 em subpáginas**.
+
+Hoje ela **não tem instância observável**: o site tem uma única rota (`/`). O `wrangler.jsonc` versionado não declara bloco `assets` — quem o declara é o `dist/server/wrangler.json` gerado pelo build, com `html_handling` no padrão.
+
+**A convenção passa a valer na primeira subpágina**, e a resolução é por configuração de `html_handling`, não por código de aplicação. Configurá-la antes disso seria convenção antecipando fato, contra §10.

@@ -1,0 +1,59 @@
+# CI — verification declared in the repository (ADR-0009 §3).
+#
+# Where each check comes from (C1 — every mandatory verification derives from a
+# documented guarantee, and the justification fits in one line):
+#   typecheck  → ADR-0001 (TypeScript as the stack) + ADR-0005 T1 (typing covers
+#                structure and data contract). Named in ADR-0009 §4.
+#   build      → ADR-0003 P2/P4 (content processed and validated at build time)
+#                + ADR-0005 T1. Named in ADR-0009 §4.
+#
+# Triggers, and why they are not the same thing:
+#   pull_request  → the pre-merge gate. The mechanism for C3 is the event's
+#                   default behaviour, which already runs against the merge
+#                   reference between the pull request head and the base.
+#   push to main  → NOT a gate, and not promoted to required: it runs after the
+#                   merge. It exists because the squash commit is born at merge
+#                   time and no verification ever saw it, and because the
+#                   production build runs `vite build` and not `tsc`. It makes
+#                   G1 observable and is what makes ADR-0009 trigger 1
+#                   detectable. It does not remove the residual race of C3,
+#                   which ADR-0009 §3 accepts.
+#
+# Details in docs/conventions.md §13.
+
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# C7.2 — the authority granted is reduced to the minimum the job actually uses.
+# These jobs only read the repository.
+permissions:
+  contents: read
+
+jobs:
+  typecheck:
+    name: typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+      - run: corepack enable pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+      - run: corepack enable pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
