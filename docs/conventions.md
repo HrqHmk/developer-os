@@ -359,7 +359,7 @@ Convenções derivadas do ADR-0009. As propriedades duráveis (C1–C9) estão n
 - Arquivo único: **`.github/workflows/ci.yml`**, workflow **`CI`**.
 - Dois jobs — **`typecheck`** e **`build`** — cada um produzindo um check run de mesmo nome.
 - **São jobs separados, e não steps de um mesmo job.** C2 exige verificação granular e individualmente reexecutável, e o ADR-0009 §3 recusa a alternativa nativa precisamente por "colapsa typecheck, teste e falha de infraestrutura num único sinal". A duplicação dos steps de preparação é o preço, e é deliberada.
-- O nome do check run é o `name` do job, **fixado explicitamente**: a promoção a verificação obrigatória casa por nome, e renomear um job quebraria a proteção de `main` em silêncio.
+- O nome do check run é o `name` do job, **fixado explicitamente**. A proteção de branch do GitHub exige **contexts por nome** (`typecheck`, `build`) — não uma execução específica ligada ao evento que a disparou. Renomear um job não quebra a proteção em silêncio: se o context exigido deixar de ser reportado, o comportamento é *fail-closed* — o GitHub continua aguardando aquele context e o merge fica bloqueado, visivelmente, até o nome ser corrigido ou o context trocado na proteção.
 
 ### 13.2 De qual garantia cada verificação deriva (C1)
 
@@ -372,12 +372,14 @@ O conjunto **não é fechado**. C1 define como uma verificação entra, não qua
 
 ### 13.3 Gatilhos, e por que os dois não têm o mesmo papel
 
+A proteção de branch do GitHub exige **contexts por nome** — `typecheck`, `build` — e não uma execução específica ligada ao evento que a disparou. Quando os dois forem promovidos a obrigatórios (Bloco B), o merge espera que esses contexts estejam satisfeitos **no commit sendo mergeado** — o head do Pull Request (ou a referência de merge). É a execução disparada por `pull_request` que reporta nesse commit, e é ela quem satisfaz o requisito.
+
 | Gatilho | Papel |
 |---|---|
-| `pull_request` | **Portão pré-merge.** O mecanismo de C3 é o comportamento padrão do evento, que já executa sobre a referência de merge entre o head do Pull Request e a base. É este conjunto que é elegível a verificação obrigatória. |
-| `push` em `main` | **Não é portão.** Roda depois do merge e, por isso, não pode bloquear nada. |
+| `pull_request` | **Roda antes do merge**, sobre a referência de merge entre o head do Pull Request e a base (mecanismo de C3). É esta execução que reporta os contexts que o merge espera. |
+| `push` em `main` | **Roda depois do merge já ter acontecido**, sobre o commit de squash em `main` — um commit diferente do que foi avaliado para o merge. Reporta contexts de mesmo nome, mas não há, nesse momento, nenhuma decisão de merge para influenciar: é execução adicional, para observabilidade. |
 
-Por que o run em `main` existe, já que não bloqueia:
+Por que o run em `main` existe, já que não gateia nada:
 
 - o commit publicado em produção **nasce no merge** (squash, §11.4) e nenhuma verificação o viu;
 - a build de produção roda `vite build`, e **não** `tsc` — sem este run, uma regressão de tipagem em `main` passaria despercebida até o Pull Request seguinte;
@@ -385,7 +387,7 @@ Por que o run em `main` existe, já que não bloqueia:
 
 **O que ele não é.** Não é tentativa de eliminar a corrida residual de C3 — a base avançar depois que a verificação rodou. Essa corrida é **aceita** pelo ADR-0009 §3, com C6 e D5 como contenção. Este run a torna visível depois do fato; não a previne.
 
-**O run de `main` nunca é promovido a obrigatório.** Ele reporta em `main`, e não no Pull Request; exigi-lo bloquearia o merge à espera de um check que só passa a existir depois dele.
+**O run de `main` não precisa de nenhuma exclusão explícita da proteção obrigatória.** Ele reporta sobre um commit que já foi mergeado, não sobre o commit que um merge futuro avalia — estruturalmente, não há como ele gatear algo que já aconteceu.
 
 ### 13.4 Determinismo da instalação
 
@@ -394,7 +396,7 @@ Cada job executa, nesta ordem: checkout → Node → pnpm → instalação conge
 | Entrada | De onde vem | Por quê |
 |---|---|---|
 | Versão do **pnpm** | `packageManager` do `package.json`, via **Corepack** | C5 e §2. Nenhuma versão de pnpm é escrita no workflow, e o Corepack verifica o sufixo `+sha512…` do campo — o hash existe para ser verificado. |
-| Versão do **Node** | `.nvmrc`, via `node-version-file` do `actions/setup-node` | C5 e §2. Mesma fonte que o Workers Builds lê. Nenhuma versão de Node é escrita no workflow. |
+| Versão do **Node** | `.nvmrc`, via `node-version-file` do `actions/setup-node` | C5 e §2. Nenhuma versão de Node é escrita no workflow. O ADR-0009 registra, a partir da documentação oficial da Cloudflare, que Workers Builds também lê `.nvmrc`/`.node-version` do repositório — **documentado pelo fornecedor, ainda não observado para a combinação Node 24.19.0 + pnpm 11.22.0 deste projeto** (incerteza 2 da Issue #20, a confirmar no Bloco C). |
 | **Dependências** | `pnpm install --frozen-lockfile` | §2 e C5. Lockfile fora de sincronia com `package.json` **deve** falhar o job, e falha: `ERR_PNPM_OUTDATED_LOCKFILE`. |
 | **Actions** | pinadas por **SHA de commit completo**, com a tag legível no comentário ao lado | §2: uma tag é mutável, e referência mutável não é versão fixada. Vale inclusive para as ações da própria organização `actions`. |
 
@@ -408,15 +410,17 @@ O caminho de instalação do pnpm depende do **Corepack**, distribuído junto co
 - **Subir o `.nvmrc` para Node 25 ou superior exige trocar o mecanismo de instalação do pnpm no mesmo Pull Request**, sob pena de quebrar os dois jobs.
 - A quebra seria barulhenta e aconteceria no Pull Request, não em produção. Ainda assim é previsível, e por isso fica registrada aqui em vez de ser redescoberta.
 
-A alternativa conhecida é `pnpm/setup`, sucessora oficial de `pnpm/action-setup` para pnpm 11+. Ela custa uma ação de terceiro a mais e não verifica o hash de `packageManager`; e derivar o Node dela exigiria `devEngines.runtime` no `package.json`, criando **segunda fonte de verdade** para uma versão que o `.nvmrc` já fixa e que o Workers Builds lê de lá.
+A alternativa conhecida é `pnpm/setup`, sucessora oficial de `pnpm/action-setup` para pnpm 11+. Ela custa uma ação de terceiro a mais e não verifica o hash de `packageManager`; e derivar o Node dela exigiria `devEngines.runtime` no `package.json`, criando **segunda fonte de verdade** para uma versão que o `.nvmrc` já fixa — e que, pela documentação do fornecedor citada em §13.4, o Workers Builds também lê de lá.
 
 ### 13.6 `minimumReleaseAge` na CI e no build do fornecedor
 
-O gate descrito em §2 **não é local**: `pnpm install --frozen-lockfile` reaplica a política a cada entrada do lockfile onde quer que rode — na CI e no Workers Builds igualmente.
+**Comprovado neste repositório.** `pnpm install --frozen-lockfile` reaplica o gate de 24h do pnpm 11 a cada entrada do lockfile — é o mecanismo de instalação do próprio pnpm, não um comportamento específico de CI. O job `typecheck` do PR #21 reportou `✓ Lockfile passes supply-chain policies`, confirmando que o gate roda e passa para as versões hoje listadas em `minimumReleaseAgeExclude`.
 
-**Consequência operacional:** fixar uma dependência publicada há menos de 24h quebra os dois, e o desbloqueio é a entrada correspondente em `minimumReleaseAgeExclude` (§2), **no mesmo Pull Request que introduz o pin**.
+**Documentado pelo fornecedor, ainda não observado neste projeto.** O ADR-0009 registra que Workers Builds lê `package.json` e o lockfile do repositório e instala a partir deles, o que sugere o mesmo gate. A Issue #20 lista a combinação Node 24.19.0 + pnpm 11.22.0 sob Workers Builds como incerteza aberta — este documento não a trata como confirmada; a confirmação pertence ao Bloco C, após o primeiro deploy real.
 
-A lista atual existe porque a instalação falhava sem ela, e não por precaução; com aquelas versões já passadas das 24h, ela é hoje inerte e volta a ficar vazia quando esses pacotes forem atualizados. A regra permanece porque o próximo pin recente a reativa.
+**Consequência operacional, independente da confirmação:** fixar uma dependência publicada há menos de 24h quebra a instalação em qualquer lugar onde `--frozen-lockfile` rode sob essa política, e o desbloqueio é a entrada correspondente em `minimumReleaseAgeExclude` (§2), **no mesmo Pull Request que introduz o pin**. Se o primeiro deploy revelar comportamento diferente no Workers Builds, o registro vai para o Bloco C, não para esta seção.
+
+A lista atual existe porque a instalação local e a de CI falhavam sem ela, e não por precaução; com aquelas versões já passadas das 24h, ela é hoje inerte e volta a ficar vazia quando esses pacotes forem atualizados. A regra permanece porque o próximo pin recente a reativa.
 
 ### 13.7 Campos que só existem no dashboard do fornecedor
 
