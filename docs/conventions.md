@@ -396,7 +396,7 @@ Cada job executa, nesta ordem: checkout → Node → pnpm → instalação conge
 | Entrada | De onde vem | Por quê |
 |---|---|---|
 | Versão do **pnpm** | `packageManager` do `package.json`, via **Corepack** | C5 e §2. Nenhuma versão de pnpm é escrita no workflow, e o Corepack verifica o sufixo `+sha512…` do campo — o hash existe para ser verificado. |
-| Versão do **Node** | `.nvmrc`, via `node-version-file` do `actions/setup-node` | C5 e §2. Nenhuma versão de Node é escrita no workflow. O ADR-0009 registra, a partir da documentação oficial da Cloudflare, que Workers Builds também lê `.nvmrc`/`.node-version` do repositório — **documentado pelo fornecedor, ainda não observado para a combinação Node 24.19.0 + pnpm 11.22.0 deste projeto** (incerteza 2 da Issue #20, a confirmar no Bloco C). |
+| Versão do **Node** | `.nvmrc`, via `node-version-file` do `actions/setup-node` | C5 e §2. Nenhuma versão de Node é escrita no workflow. O ADR-0009 registra, a partir da documentação oficial da Cloudflare, que Workers Builds também lê `.nvmrc`/`.node-version` do repositório — **confirmado neste projeto para a combinação Node 24.19.0 + pnpm 11.22.0 sob Workers Builds** (§13.9.2, fecha a incerteza 2 da Issue #20). |
 | **Dependências** | `pnpm install --frozen-lockfile` | §2 e C5. Lockfile fora de sincronia com `package.json` **deve** falhar o job, e falha: `ERR_PNPM_OUTDATED_LOCKFILE`. |
 | **Actions** | pinadas por **SHA de commit completo**, com a tag legível no comentário ao lado | §2: uma tag é mutável, e referência mutável não é versão fixada. Vale inclusive para as ações da própria organização `actions`. |
 
@@ -449,3 +449,44 @@ O ADR-0006 §4 registra a interação: o `autoSubfolderIndex` do TanStack Start 
 Hoje ela **não tem instância observável**: o site tem uma única rota (`/`). O `wrangler.jsonc` versionado não declara bloco `assets` — quem o declara é o `dist/server/wrangler.json` gerado pelo build, com `html_handling` no padrão.
 
 **A convenção passa a valer na primeira subpágina**, e a resolução é por configuração de `html_handling`, não por código de aplicação. Configurá-la antes disso seria convenção antecipando fato, contra §10.
+
+### 13.9 Observações do primeiro deploy real (Bloco C, Issue #20)
+
+Registra o que foi **observado** no primeiro fluxo real de deploy e nas validações manuais feitas em seguida — não o que era esperado. Fecha o que pode ser fechado das incertezas do ADR-0009 §6 e da Issue #20; o que não foi observado é registrado como tal, e não como resolvido por ausência de caso de teste.
+
+#### 13.9.1 Produção (C4, D1)
+
+Primeiro deploy de produção via Workers Builds: **sucesso**, construído a partir de um commit já existente em `main`.
+
+#### 13.9.2 Node 24.19.0 + pnpm 11.22.0 sob Workers Builds
+
+**Confirmado**: a combinação funciona sob Workers Builds. Fecha a incerteza registrada em §13.4 (incerteza 2 da Issue #20).
+
+Isso confirma que Workers Builds lê `.nvmrc`/`.node-version` e instala com sucesso a partir do lockfile para esta combinação — **não confirma**, isoladamente, se o gate `minimumReleaseAge` do pnpm 11 (§13.6) é de fato aplicado sob Workers Builds: como todas as entradas hoje em `minimumReleaseAgeExclude` já tinham mais de 24h no momento deste deploy, um build bem-sucedido não distingue "o gate roda e passa" de "o gate não se aplica aqui". §13.6 permanece com essa incerteza específica em aberto.
+
+#### 13.9.3 Build de branch não-produtiva e preview
+
+Build de uma branch interna não-produtiva: **sucesso**. O preview correspondente foi gerado e abriu corretamente.
+
+O que foi exercitado é o build e o preview de **branch não-produtiva**, não o fluxo de Pull Request especificamente — nenhum Pull Request foi aberto para essa branch neste teste. O comportamento específico de preview vinculado a um Pull Request (comentário automático da Cloudflare, URL por commit e alias estável por branch, conforme o levantamento técnico do ADR-0009) não foi verificado em separado.
+
+#### 13.9.4 Build falho em branch não-produtiva
+
+Foi provocado deliberadamente um build falho em uma branch interna não-produtiva. O que se observa com segurança:
+
+- o build da branch não-produtiva **falhou no Workers Builds**;
+- a produção anterior **permaneceu acessível normalmente**, sem alteração do deployment servido, durante e depois da falha.
+
+Não há, no histórico de execuções do GitHub Actions, um run correspondente a esse push — o workflow `CI` dispara em `pull_request` e em `push` para `main` (§13.3), e o push em questão foi para uma branch não-produtiva sem Pull Request aberto. Por isso este documento **não afirma** que um check do GitHub também falhou nesse evento: não há evidência de que ele tenha rodado.
+
+O que esse resultado confirma é C6 no lado do Workers Builds — falha de build não altera o que está sendo servido, e a falha foi observável na própria plataforma.
+
+#### 13.9.5 Retenção de logs de build (D4)
+
+Observação feita no Bloco C, em 2026-08-29: logs de builds executados cerca de dois dias antes continuavam acessíveis normalmente na Cloudflare. O **teto** de retenção não foi determinado — apenas esse piso foi observado, nessa data.
+
+#### 13.9.6 Não observado / permanece aberto
+
+- **Pull Request vindo de fork**: não testado. Não existe hoje uma segunda conta ou fork real disponível, e a decisão foi não fabricar esse cenário apenas para fechar um checkbox. Permanece **explicitamente pendente**, não confirmado — conforme o próprio ADR-0009 §6 adverte, a política de fork (§5) "só protege se for efetivamente verificada na configuração, e não presumida a partir do comportamento observado". Na UI observada durante o Bloco C, o Workers Builds não expôs uma flag separada de preview de fork que permitisse essa confirmação por outra via.
+- **Alcance de variáveis/secrets de dashboard em builds não-produtivos**: não testado. Não existe hoje variável ou secret relevante para exercitar esse caso. É a incerteza que o ADR-0009 §6 chama de mais consequente, na fronteira com D9 — permanece aberta, e deve ser revisitada quando surgir o primeiro consumidor real desse tipo de configuração.
+- **Consumo de build minutes e comportamento no limite de cota**: não testado artificialmente.
