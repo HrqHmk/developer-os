@@ -462,7 +462,7 @@ URL canônica adotada: **sem barra final** (`/about`, não `/about/`).
 | `GET /about/` | `307` → `Location: /about`, um único hop, sem loop |
 | Asset estático (ex. `/assets/app-*.css`) | `200`, direto, sem redirect — `html_handling` não afeta ativos não-HTML |
 
-**Comportamento em Workers Builds real**: validação pendente nesta Issue — a ser preenchida quando a URL de preview real for gerada pelo Cloudflare.
+**Comportamento confirmado em Workers Builds real** (preview de PR #28, commit `88bf3bb`): idêntico ao observado via Miniflare — `/` → `200`; `/about` → `200` direto (`0` redirects); `/about/` → `307` com `Location: /about` (`1` redirect, sem loop); asset estático (`/assets/app-*.css`) → `200` direto. **Nenhuma divergência observada** entre Miniflare e o Workers Builds real para esta configuração.
 
 **Correção sobre a fonte de evidência.** O log interno de prerender do `vite build` (`[prerender] GET /about/ 307 ... GET /about 200`) **não reflete o roteamento real do Workers Assets** — é produzido pelo crawler de prerender do TanStack Start/Nitro durante o build, mecanismo totalmente distinto de `html_handling`. Antes da Issue #27, esse log foi citado (PR #26) como se fosse evidência do comportamento de produção; verificado via `pnpm preview`/Miniflare, o comportamento real sob o `html_handling` padrão anterior à mudança era o **oposto** do que esse log sugeria — `/about` redirecionava para `/about/`, não o contrário. A partir de agora, apenas `pnpm preview` (Miniflare) e o Workers Builds real são evidência válida para este comportamento; o log de prerender do build não é.
 
