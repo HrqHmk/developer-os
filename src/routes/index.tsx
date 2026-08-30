@@ -5,5 +5,12 @@ export const Route = createFileRoute('/')({
 })
 
 function Home() {
-  return <h1>Developer OS</h1>
+  return (
+    <main className="flex min-h-screen flex-col items-center justify-center gap-4 px-6 text-center">
+      <h1 className="text-4xl font-bold leading-[1.1] sm:text-5xl">Developer OS</h1>
+      <p className="text-lg text-muted-foreground">
+        Engineering software. Orchestrating AI. Learning in public.
+      </p>
+    </main>
+  )
 }
