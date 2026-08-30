@@ -447,11 +447,24 @@ O **check run do fornecedor nunca integra a verificação obrigatória de merge*
 
 ### 13.8 Barra final
 
-O ADR-0006 §4 registra a interação: o `autoSubfolderIndex` do TanStack Start combinado com o `html_handling` padrão do Workers produz **307 em subpáginas**.
+O ADR-0006 §4 registra a interação: o `autoSubfolderIndex` do TanStack Start combinado com o `html_handling` padrão do Workers produz **307 em subpáginas**. A convenção passou a valer na primeira subpágina real (`/about`, Issue #25) e foi resolvida na Issue #27.
 
-Hoje ela **não tem instância observável**: o site tem uma única rota (`/`). O `wrangler.jsonc` versionado não declara bloco `assets` — quem o declara é o `dist/server/wrangler.json` gerado pelo build, com `html_handling` no padrão.
+**Decisão**: `assets.html_handling: "drop-trailing-slash"`, declarado em `wrangler.jsonc` (raiz, versionado) — única fonte de verdade. Nenhuma configuração manual de dashboard foi necessária para este campo, e nenhuma divergência foi observada entre o `wrangler.jsonc` versionado e o `dist/server/wrangler.json` gerado pelo build: o valor propaga corretamente para o bloco `assets` gerado.
 
-**A convenção passa a valer na primeira subpágina**, e a resolução é por configuração de `html_handling`, não por código de aplicação. Configurá-la antes disso seria convenção antecipando fato, contra §10.
+URL canônica adotada: **sem barra final** (`/about`, não `/about/`).
+
+**Comportamento confirmado localmente**, via `pnpm preview` (roda através do Miniflare por meio do `@cloudflare/vite-plugin`, fiel ao roteamento real de Workers Assets — ver correção de evidência abaixo):
+
+| Requisição | Resultado |
+|---|---|
+| `GET /` | `200` |
+| `GET /about` | `200`, direto, sem redirect |
+| `GET /about/` | `307` → `Location: /about`, um único hop, sem loop |
+| Asset estático (ex. `/assets/app-*.css`) | `200`, direto, sem redirect — `html_handling` não afeta ativos não-HTML |
+
+**Comportamento em Workers Builds real**: validação pendente nesta Issue — a ser preenchida quando a URL de preview real for gerada pelo Cloudflare.
+
+**Correção sobre a fonte de evidência.** O log interno de prerender do `vite build` (`[prerender] GET /about/ 307 ... GET /about 200`) **não reflete o roteamento real do Workers Assets** — é produzido pelo crawler de prerender do TanStack Start/Nitro durante o build, mecanismo totalmente distinto de `html_handling`. Antes da Issue #27, esse log foi citado (PR #26) como se fosse evidência do comportamento de produção; verificado via `pnpm preview`/Miniflare, o comportamento real sob o `html_handling` padrão anterior à mudança era o **oposto** do que esse log sugeria — `/about` redirecionava para `/about/`, não o contrário. A partir de agora, apenas `pnpm preview` (Miniflare) e o Workers Builds real são evidência válida para este comportamento; o log de prerender do build não é.
 
 ### 13.9 Observações do primeiro deploy real (Bloco C, Issue #20)
 
