@@ -17,8 +17,8 @@ O Playground ocupava originalmente a Fase 3. Ele foi movido para o fim e **o nú
 - [x] Definir identidade visual
 - [x] Estrutura inicial
 - [ ] CI/CD e automação do fluxo de deploy (governado pelo ADR-0009; operacionaliza o ADR-0006)
-- [ ] Home
-- [ ] Sobre
+- [x] Home
+- [x] Sobre
 - [ ] Blog
 - [ ] Projetos
 
