@@ -1,0 +1,15 @@
+@import 'tailwindcss' source('../');
+@import '@fontsource-variable/geist';
+
+:root {
+  --color-background: #fafafa;
+  --color-foreground: #111315;
+  --color-muted-foreground: #62666d;
+}
+
+@theme inline {
+  --color-background: var(--color-background);
+  --color-foreground: var(--color-foreground);
+  --color-muted-foreground: var(--color-muted-foreground);
+  --font-sans: 'Geist Variable', system-ui, sans-serif;
+}
