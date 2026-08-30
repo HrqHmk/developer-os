@@ -77,6 +77,8 @@ Componentes de terceiros são adaptados aos tokens já definidos no design syste
 - Respeitar os **tokens semânticos** de `docs/design-system.md`.
 - **Não usar cores hardcoded** quando existir token apropriado (ex.: usar `bg-card`, não `bg-[#12171F]`). Exceções devem ser justificadas.
 - Escalas que divergem dos defaults do Tailwind — radius (8/12/16/20) e `text-6xl` (56px) — precisam ser **declaradas explicitamente**.
+- **Instalado a partir da Issue #23** (`tailwindcss` e `@tailwindcss/vite`, versão `4.3.3`). A versão instalada é controlada pelo `package.json`/lockfile, conforme §2.
+- O entrypoint CSS restringe a **detecção automática de fonte do Tailwind à raiz de `src/`** (`@import "tailwindcss" source("../")`, a partir de `src/styles/app.css`). Sem essa restrição, a detecção automática varre todo o repositório não ignorado pelo Git — incluindo `docs/` — e qualquer texto com a forma de uma classe (ex.: um exemplo do que **não** fazer em `design-system.md`, como `bg-[#12171F]`) é gerado como utility real no CSS de produção. Observado durante a implementação da Issue #23.
 
 ### Spacing
 
@@ -93,6 +95,7 @@ A família tipográfica é definida em `docs/design-system.md`. Esta seção reg
 
 - **Estratégia adotada: `@fontsource-variable/geist`** (variable, cobre em um único arquivo os pesos usados pelo design system).
 - A **versão instalada é controlada pelo `package.json`/lockfile**, conforme §2. Não há versão a registrar fora do lockfile.
+- **Instalado a partir da Issue #23**, versão `5.3.0`.
 - A fonte é **carregada localmente pela aplicação durante o build**, sem dependência externa em runtime.
 - **CDN externo não deve ser utilizado para fontes.** Introduziria dependência de runtime, exposição de dados dos visitantes a terceiros e perda de controle de versão — contrariando `architecture.md` §11.
 - O nome de família exposto pelo Fontsource é **`Geist Variable`**; é esse o nome usado no token, conforme `design-system.md`.
