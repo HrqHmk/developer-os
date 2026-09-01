@@ -19,14 +19,14 @@ O Playground ocupava originalmente a Fase 3. Ele foi movido para o fim e **o nú
 - [ ] CI/CD e automação do fluxo de deploy (governado pelo ADR-0009; operacionaliza o ADR-0006)
 - [x] Home
 - [x] Sobre
-- [ ] Blog
+- [x] Blog
 - [ ] Projetos
 
 ---
 
 ## Fase 2 — Conteúdo
 
-- [ ] Primeiro artigo
+- [x] Primeiro artigo
 - [ ] Página Uses
 - [ ] Página Arquitetura
 - [ ] Página Changelog

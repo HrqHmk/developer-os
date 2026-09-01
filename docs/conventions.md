@@ -166,11 +166,13 @@ src/content/
 
 ### 8.4 Pipeline de Markdown
 
-- O pipeline vive em `src/content/pipeline/`, com **responsabilidades separadas por módulo**: descoberta dos arquivos, validação do frontmatter e processamento do Markdown.
-- O pipeline expõe **um único ponto de entrada público**. Rotas e componentes consomem esse ponto de entrada e **nunca importam arquivos `.md` diretamente** nem invocam o processador de Markdown por conta própria.
-- O que sai do pipeline é **dado já validado e já processado** (P2, P3). Nenhuma etapa de parsing ocorre em runtime.
-- Os **plugins habilitados ficam declarados em um único módulo**, explicitamente e nunca por default implícito. O pipeline deve manter **HTML bruto desabilitado** (P9).
-- A lista nominal de plugins é registrada aqui quando o pipeline for implementado — o ADR-0003 deixou essa escolha fora do escopo da decisão.
+- O pipeline vive em `src/content/pipeline/`, com **responsabilidades separadas por módulo**: `discovery.ts` (descoberta via `node:fs` — `readdirSync`/`statSync`, sem glob — com caminhos resolvidos a partir de `import.meta.url`, nunca `process.cwd()`), `frontmatter.ts` (extração via `gray-matter` + validação contra o schema do tipo) e `markdown.ts` (processamento via `unified`).
+- O pipeline expõe **um único ponto de entrada público**: `buildArticles()`, em `build-articles.ts`. Rotas e componentes **nunca importam arquivos `.md` diretamente**, nem `discovery.ts`/`frontmatter.ts`/`markdown.ts`, nem invocam o processador de Markdown por conta própria — nem sequer `buildArticles()` diretamente (ver abaixo).
+- O que sai do pipeline é **dado já validado e já processado** (P2, P3). Nenhuma etapa de parsing ocorre em runtime — nem no cliente, nem no servidor de requisições.
+- `buildArticles(articlesDir?)` é **determinística, sem cache/memoização**: descobre, valida, processa e retorna o snapshot ordenado por `publishedAt` descendente. Lança erro síncrono no primeiro artigo inválido — conteúdo inválido nunca chega a compor o snapshot retornado.
+- **Plugins habilitados, declarados explicitamente em `markdown.ts`**: `remark-parse` → `remark-rehype` → `rehype-stringify`, processados de forma síncrona (`processSync`, sem plugin assíncrono) para que `buildArticles()` possa rodar no corpo de `vite.config.ts` sem `await`. Extração de frontmatter usa `gray-matter` (`frontmatter.ts`).
+- **P9 — rejeição explícita de HTML bruto**: `markdown.ts` inclui um plugin remark próprio (`rejectRawHtml`, sem dependência nova) que percorre a árvore mdast e lança erro se encontrar um nó `html` — cobre tanto HTML inline quanto em bloco, já que mdast usa o mesmo tipo de nó para os dois. Isso é preferido ao descarte silencioso padrão do `remark-rehype` (que já ocorreria de qualquer forma, sem `allowDangerousHtml: true`, como camada adicional).
+- **Como a aplicação consome o pipeline sem alcançá-lo**: `vite.config.ts` chama `buildArticles()` uma única vez, guarda o resultado em `const articles`, e distribui esse mesmo snapshot para `prerender.pages` (paths explícitos, ver §8.6) e para o plugin Vite `virtualArticlesPlugin(articles)` (`virtual-articles-plugin.ts`), que apenas serializa o array recebido como o módulo virtual `virtual:articles` — esse plugin nunca importa `build-articles.ts`/`discovery.ts`/`frontmatter.ts`/`markdown.ts` nem `node:fs`/`gray-matter`/`unified`. Rotas importam só `virtual:articles`. Essa fronteira é o que garante, estruturalmente, que o compilador de conteúdo nunca alcança o bundle do cliente nem o do servidor de requisições (P3) — verificado por inspeção do artefato de build, não apenas presumido.
 
 ### 8.5 Conteúdo estruturado em TypeScript
 
@@ -179,6 +181,11 @@ src/content/
 - **Não importam código de aplicação** — nada de componentes, rotas, integrações ou helpers. A dependência é de tipos, não de comportamento.
 - Exportar como `const`, validando a forma contra um **tipo explícito** para que o compilador acuse divergências sem descartar a inferência dos valores literais.
 - **Prosa longa não entra aqui** (P6). Se uma entidade estruturada passar a ter corpo editorial, ela vira uma entrada em `entries/`, com os metadados no frontmatter.
+
+### 8.6 Prerender explícito de conteúdo
+
+- Rotas dinâmicas de conteúdo (ex. `/blog/$slug`) não entram na descoberta automática de prerender (ADR-0001). `vite.config.ts` deriva `pages` a partir do mesmo snapshot de `buildArticles()` usado pela aplicação — nunca de uma listagem mantida à parte, e nunca só do crawler de links do prerender.
+- `buildArticles()` roda em contexto Node puro, fora do grafo de transformação do Vite — por isso a descoberta usa `node:fs`, não `import.meta.glob` (que não resolve dentro de `vite.config.ts`).
 
 ---
 
@@ -299,11 +306,13 @@ Convenções derivadas do ADR-0005. As propriedades duráveis (T1–T11) estão 
 
 | Camada | Ferramenta | Instalada quando |
 |---|---|---|
-| Unitário e integração | Vitest (4.1.x) | primeiro código de `src/content/pipeline/` |
+| Unitário e integração | Vitest (`4.1.11`) | primeiro código de `src/content/pipeline/` |
 | Componente | React Testing Library (16.3.x) + user-event (14.6.x), ambiente jsdom (30.x) | primeiro componente com comportamento próprio |
 | E2E | Playwright (1.62.x) | primeiro fluxo E2E obrigatório, idealmente junto do CI/CD |
 
 Nenhuma dependência de teste é instalada antes disso (T10). As versões seguem §2: fixadas pelo lockfile, atualizadas de forma deliberada.
+
+**Instalado a partir da Issue #29**, versão `4.1.11`, junto do primeiro código de `src/content/pipeline/`. Config dedicada em `vitest.config.ts` (ambiente Node padrão, sem os plugins de `vite.config.ts` — evita fricção com `@cloudflare/vite-plugin`/`tanstackStart` no test runner, que não têm papel nenhum na execução de testes de módulos puros).
 
 ### 12.2 Localização e nomenclatura
 
