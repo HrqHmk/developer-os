@@ -13,3 +13,58 @@
   --color-muted-foreground: var(--color-muted-foreground);
   --font-sans: 'Geist Variable', system-ui, sans-serif;
 }
+
+/*
+ * Styles the HTML the content pipeline compiles from Markdown (rendered via
+ * dangerouslySetInnerHTML in blog.$slug.tsx). Plain scoped CSS instead of
+ * @tailwindcss/typography, which isn't installed and isn't needed for this
+ * scope. No syntax highlighting — code blocks stay unstyled beyond spacing
+ * and horizontal scroll, using only tokens already defined above.
+ */
+.article-body {
+  color: var(--color-foreground);
+  line-height: 1.7;
+}
+
+.article-body :where(h1, h2, h3) {
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  font-weight: 700;
+}
+
+.article-body h2 {
+  font-size: 1.5rem;
+}
+
+.article-body p {
+  margin-bottom: 1rem;
+}
+
+.article-body a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.article-body strong {
+  font-weight: 600;
+}
+
+.article-body ul,
+.article-body ol {
+  margin-bottom: 1rem;
+  padding-left: 1.5rem;
+}
+
+.article-body li {
+  margin-bottom: 0.25rem;
+}
+
+.article-body pre {
+  margin-bottom: 1rem;
+  overflow-x: auto;
+}
+
+.article-body code {
+  font-family: monospace;
+}

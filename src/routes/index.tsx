@@ -11,9 +11,14 @@ function Home() {
       <p className="text-lg text-muted-foreground">
         Engineering software. Orchestrating AI. Learning in public.
       </p>
-      <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground">
-        About →
-      </Link>
+      <div className="flex gap-4">
+        <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground">
+          About →
+        </Link>
+        <Link to="/blog" className="text-sm text-muted-foreground hover:text-foreground">
+          Blog →
+        </Link>
+      </div>
     </main>
   )
 }
