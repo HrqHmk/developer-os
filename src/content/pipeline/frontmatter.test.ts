@@ -20,7 +20,11 @@ describe('parseFrontmatter', () => {
     expect(frontmatter.description).toBe(
       'A valid fixture article used to verify the pipeline end to end.',
     )
-    expect(frontmatter.publishedAt).toBeInstanceOf(Date)
+    // The fixture's `publishedAt: 2026-02-01` is unquoted YAML — gray-matter's
+    // default engine would auto-promote this to a `Date`. It must survive as
+    // the original string.
+    expect(frontmatter.publishedAt).toBe('2026-02-01')
+    expect(typeof frontmatter.publishedAt).toBe('string')
     expect(body).toContain('## Heading')
     expect(body).not.toContain('title:')
   })

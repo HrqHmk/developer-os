@@ -25,8 +25,12 @@ export function discoverArticles(articlesDir = defaultArticlesDir): DiscoveredAr
   let entries: string[]
   try {
     entries = readdirSync(articlesDir)
-  } catch {
-    return []
+  } catch (cause) {
+    // A missing/inaccessible articles directory is a build misconfiguration
+    // (wrong path, permissions, I/O error) — it must fail loud, not degrade
+    // to an empty blog. A real, empty directory never reaches this catch:
+    // `readdirSync` on an existing empty directory returns `[]` directly.
+    throw new Error(`Failed to read articles directory at "${articlesDir}"`, { cause })
   }
 
   return entries

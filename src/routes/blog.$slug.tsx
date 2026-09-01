@@ -1,5 +1,6 @@
 import { Link, createFileRoute, notFound } from '@tanstack/react-router'
 import { articles } from 'virtual:articles'
+import { formatPublishedAt } from '../lib/format-published-at.ts'
 
 export const Route = createFileRoute('/blog/$slug')({
   loader: ({ params }) => {
@@ -13,14 +14,6 @@ export const Route = createFileRoute('/blog/$slug')({
   component: BlogArticle,
 })
 
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  })
-}
-
 function BlogArticle() {
   const article = Route.useLoaderData()
 
@@ -28,7 +21,9 @@ function BlogArticle() {
     <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-8 px-6 py-16">
       <div className="space-y-2">
         <h1 className="text-3xl font-bold sm:text-4xl">{article.title}</h1>
-        <p className="text-sm text-muted-foreground">{formatDate(article.publishedAt)}</p>
+        <p className="text-sm text-muted-foreground">
+          {formatPublishedAt(article.publishedAt)}
+        </p>
       </div>
       {/* Safe here: `html` is build-time output of the project's own content
           pipeline (versioned Markdown, validated in build), never user input. */}

@@ -32,4 +32,11 @@ describe('buildArticles', () => {
   it('returns an empty array for a directory with no articles', () => {
     expect(buildArticles(join(fixturesDir, 'discovery-sample', 'empty-dir-no-index'))).toEqual([])
   })
+
+  it('breaks a publishedAt tie by falling back to discovery order (by slug)', () => {
+    const articles = buildArticles(join(fixturesDir, 'tied-published-at'))
+
+    expect(articles.map((a) => a.slug)).toEqual(['article-a', 'article-b'])
+    expect(articles[0].publishedAt).toBe(articles[1].publishedAt)
+  })
 })

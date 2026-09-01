@@ -27,7 +27,15 @@ describe('discoverArticles', () => {
     expect(articleA?.raw).toContain('Body A.')
   })
 
-  it('returns an empty list for a directory that does not exist', () => {
-    expect(discoverArticles(join(fixturesDir, 'does-not-exist'))).toEqual([])
+  it('throws when the articles directory does not exist, instead of silently returning []', () => {
+    const missingDir = join(fixturesDir, 'does-not-exist')
+
+    expect(() => discoverArticles(missingDir)).toThrow(/Failed to read articles directory/)
+  })
+
+  it('returns an empty list for a directory that exists but has no articles', () => {
+    const emptyDir = join(fixturesDir, 'discovery-sample', 'empty-dir-no-index')
+
+    expect(discoverArticles(emptyDir)).toEqual([])
   })
 })

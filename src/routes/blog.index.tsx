@@ -1,5 +1,6 @@
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { articles } from 'virtual:articles'
+import { formatPublishedAt } from '../lib/format-published-at.ts'
 
 export const Route = createFileRoute('/blog/')({
   head: () => ({
@@ -7,14 +8,6 @@ export const Route = createFileRoute('/blog/')({
   }),
   component: Blog,
 })
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  })
-}
 
 function Blog() {
   return (
@@ -26,7 +19,9 @@ function Blog() {
             <Link to="/blog/$slug" params={{ slug: article.slug }} className="block space-y-2">
               <h2 className="text-xl font-semibold hover:text-foreground">{article.title}</h2>
               <p className="text-muted-foreground">{article.description}</p>
-              <p className="text-sm text-muted-foreground">{formatDate(article.publishedAt)}</p>
+              <p className="text-sm text-muted-foreground">
+                {formatPublishedAt(article.publishedAt)}
+              </p>
             </Link>
           </li>
         ))}

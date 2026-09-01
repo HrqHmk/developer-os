@@ -6,6 +6,7 @@ export type CompiledArticle = {
   slug: string
   title: string
   description: string
+  /** Calendar date `YYYY-MM-DD`, never a `Date`, never a timestamp. */
   publishedAt: string
   html: string
 }
@@ -30,10 +31,13 @@ export function buildArticles(articlesDir = defaultArticlesDir): CompiledArticle
       slug,
       title: frontmatter.title,
       description: frontmatter.description,
-      publishedAt: frontmatter.publishedAt.toISOString(),
+      publishedAt: frontmatter.publishedAt,
       html: toHtml(body),
     }
   })
 
-  return articles.sort((a, b) => (a.publishedAt < b.publishedAt ? 1 : -1))
+  // `publishedAt` is `YYYY-MM-DD`, so lexicographic order is chronological
+  // order. `Array.prototype.sort` is stable, so articles with the same date
+  // keep the deterministic discovery order (by slug) from `discoverArticles`.
+  return articles.sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
 }

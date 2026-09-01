@@ -1,7 +1,7 @@
 ---
 title: Why I'm Building Developer OS
 description: What Developer OS is for, why AI agents write most of the code here under my review, and why the process is documented as openly as the output.
-publishedAt: 2026-09-04
+publishedAt: 2026-09-01
 ---
 
 Developer OS started as a simple question: what if the way I build software was itself the thing worth sharing, not just what got shipped?
