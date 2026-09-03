@@ -1,46 +1,47 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs'
-import { dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { join } from 'node:path'
 
-export const defaultArticlesDir = join(
-  dirname(fileURLToPath(import.meta.url)),
-  '..',
-  'entries',
-  'articles',
-)
-
-export type DiscoveredArticleFile = {
+export type DiscoveredEntryFile = {
   slug: string
   filePath: string
   raw: string
 }
 
 /**
- * Lists every article entry directory that contains an `index.md`, reading
+ * Lists every content entry directory that contains an `index.md`, reading
  * its raw file content. Pure `node:fs`, no glob — this must be callable both
  * from `vite.config.ts` (plain Node, outside Vite's transform graph) and
- * from the pipeline itself.
+ * from the pipeline itself. Shared by every content type (Article, Project,
+ * ...) — each caller supplies its own `entriesDir`.
  */
-export function discoverArticles(articlesDir = defaultArticlesDir): DiscoveredArticleFile[] {
+export function discoverEntries(entriesDir: string): DiscoveredEntryFile[] {
   let entries: string[]
   try {
-    entries = readdirSync(articlesDir)
+    entries = readdirSync(entriesDir)
   } catch (cause) {
-    // A missing/inaccessible articles directory is a build misconfiguration
+    // A missing/inaccessible entries directory is a build misconfiguration
     // (wrong path, permissions, I/O error) — it must fail loud, not degrade
-    // to an empty blog. A real, empty directory never reaches this catch:
+    // to an empty listing. A real, empty directory never reaches this catch:
     // `readdirSync` on an existing empty directory returns `[]` directly.
-    throw new Error(`Failed to read articles directory at "${articlesDir}"`, { cause })
+    throw new Error(`Failed to read entries directory at "${entriesDir}"`, { cause })
   }
 
   return entries
-    .filter((entry) => statSync(join(articlesDir, entry)).isDirectory())
-    .map((slug) => ({ slug, filePath: join(articlesDir, slug, 'index.md') }))
+    .filter((entry) => statSync(join(entriesDir, entry)).isDirectory())
+    .map((slug) => ({ slug, filePath: join(entriesDir, slug, 'index.md') }))
     .filter(({ filePath }) => {
       try {
         return statSync(filePath).isFile()
-      } catch {
-        return false
+      } catch (cause) {
+        // A missing `index.md` (ENOENT) means the directory simply isn't a
+        // content entry — that's expected and gets filtered out. Any other
+        // error inspecting it (EACCES, EIO, ...) is a real filesystem
+        // failure and must fail the build loudly, not be read as "no
+        // content here".
+        if (cause instanceof Error && (cause as NodeJS.ErrnoException).code === 'ENOENT') {
+          return false
+        }
+        throw new Error(`Failed to inspect content entry at "${filePath}"`, { cause })
       }
     })
     .map(({ slug, filePath }) => ({

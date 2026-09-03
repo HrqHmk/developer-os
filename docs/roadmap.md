@@ -20,7 +20,7 @@ O Playground ocupava originalmente a Fase 3. Ele foi movido para o fim e **o nú
 - [x] Home
 - [x] Sobre
 - [x] Blog
-- [ ] Projetos
+- [x] Projetos
 
 ---
 
