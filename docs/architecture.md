@@ -109,7 +109,7 @@ developer-os/
 
 Testes unitários e de integração ficam **co-locados** com o código que verificam, dentro de `src/`, e não em diretório próprio. `tests/` é reservado ao E2E, que não tem código-fonte correspondente para acompanhar. Ver ADR-0005 e `conventions.md` §12.
 
-Esta é a estrutura-alvo: diretórios nascem quando há código que os justifique (`architecture.md` §11), não antecipadamente. `src/routes/` é o único já criado pelo scaffold da issue #16 — os demais aparecem quando a necessidade correspondente (ADR-0002, ADR-0003, primeira integração) existir.
+Esta é a estrutura-alvo: diretórios nascem quando há código que os justifique (`architecture.md` §11), não antecipadamente. `src/routes/`, `src/content/` (ADR-0003, desde o Blog) e `src/lib/` já existem. `src/components/` e `src/integrations/` ainda não — aparecem quando a necessidade correspondente (primeiro componente reutilizado, primeira integração externa) existir.
 
 ---
 
