@@ -8,7 +8,12 @@ export const Route = createFileRoute('/projects/$slug')({
     return project
   },
   head: ({ loaderData }) => ({
-    meta: loaderData ? [{ title: `${loaderData.title} — Developer OS` }] : [],
+    meta: loaderData
+      ? [
+          { title: `${loaderData.title} — Developer OS` },
+          { name: 'description', content: loaderData.description },
+        ]
+      : [],
   }),
   component: ProjectDetail,
 })

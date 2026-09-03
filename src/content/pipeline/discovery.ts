@@ -32,8 +32,16 @@ export function discoverEntries(entriesDir: string): DiscoveredEntryFile[] {
     .filter(({ filePath }) => {
       try {
         return statSync(filePath).isFile()
-      } catch {
-        return false
+      } catch (cause) {
+        // A missing `index.md` (ENOENT) means the directory simply isn't a
+        // content entry — that's expected and gets filtered out. Any other
+        // error inspecting it (EACCES, EIO, ...) is a real filesystem
+        // failure and must fail the build loudly, not be read as "no
+        // content here".
+        if (cause instanceof Error && (cause as NodeJS.ErrnoException).code === 'ENOENT') {
+          return false
+        }
+        throw new Error(`Failed to inspect content entry at "${filePath}"`, { cause })
       }
     })
     .map(({ slug, filePath }) => ({
