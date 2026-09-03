@@ -18,6 +18,9 @@ function Home() {
         <Link to="/blog" className="text-sm text-muted-foreground hover:text-foreground">
           Blog →
         </Link>
+        <Link to="/projects" className="text-sm text-muted-foreground hover:text-foreground">
+          Projects →
+        </Link>
       </div>
     </main>
   )
