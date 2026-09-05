@@ -496,7 +496,9 @@ Isso confirma que Workers Builds lê `.nvmrc`/`.node-version` e instala com suce
 
 Build de uma branch interna não-produtiva: **sucesso**. O preview correspondente foi gerado e abriu corretamente.
 
-O que foi exercitado é o build e o preview de **branch não-produtiva**, não o fluxo de Pull Request especificamente — nenhum Pull Request foi aberto para essa branch neste teste. O comportamento específico de preview vinculado a um Pull Request (comentário automático da Cloudflare, URL por commit e alias estável por branch, conforme o levantamento técnico do ADR-0009) não foi verificado em separado.
+O que foi exercitado é o build e o preview de **branch não-produtiva**, não o fluxo de Pull Request especificamente — nenhum Pull Request foi aberto para essa branch neste teste. O comportamento específico de preview vinculado a um Pull Request (comentário automático da Cloudflare, URL por commit e alias estável por branch, conforme o levantamento técnico do ADR-0009) não foi verificado em separado nesta observação.
+
+**Atualização (fechamento da Issue #20).** O fluxo de preview vinculado a Pull Request foi confirmado posteriormente, sem teste dedicado: a abertura do próprio PR #22 — um Pull Request **interno**, de branch do mesmo repositório, sem fork — gerou preview da Cloudflare corretamente vinculado a esse Pull Request. Isso fecha, para Pull Request interno, o critério de aceite da Issue #20 "a Pull Request from this repository receives its own preview URL" (D3). O que permanece não observado é exclusivamente o caso de **Pull Request vindo de fork** (§13.9.6) — cenário distinto, governado por política própria (ADR-0009 §5), e não pelo mecanismo geral de preview de Pull Request que este parágrafo fecha.
 
 #### 13.9.4 Build falho em branch não-produtiva
 
@@ -518,3 +520,21 @@ Observação feita no Bloco C, em 2026-08-29: logs de builds executados cerca de
 - **Pull Request vindo de fork**: não testado. Não existe hoje uma segunda conta ou fork real disponível, e a decisão foi não fabricar esse cenário apenas para fechar um checkbox. Permanece **explicitamente pendente**, não confirmado — conforme o próprio ADR-0009 §6 adverte, a política de fork (§5) "só protege se for efetivamente verificada na configuração, e não presumida a partir do comportamento observado". Na UI observada durante o Bloco C, o Workers Builds não expôs uma flag separada de preview de fork que permitisse essa confirmação por outra via.
 - **Alcance de variáveis/secrets de dashboard em builds não-produtivos**: não testado. Não existe hoje variável ou secret relevante para exercitar esse caso. É a incerteza que o ADR-0009 §6 chama de mais consequente, na fronteira com D9 — permanece aberta, e deve ser revisitada quando surgir o primeiro consumidor real desse tipo de configuração.
 - **Consumo de build minutes e comportamento no limite de cota**: não testado artificialmente.
+
+### 13.10 Verificação de C7.3 — conta Cloudflare dedicada
+
+ADR-0009 §3 lista cinco itens como pré-condição do primeiro deploy real (a "conta dedicada como pré-condição de C7"). Nenhum deles havia sido registrado por escrito antes deste documento — a lacuna era documental, não necessariamente de execução. O que segue é o registro factual do que pôde ser inspecionado nesta revisão e o limite explícito do que não pôde, para não repetir, aqui, o erro que este mesmo documento evita em §13.9.6: não marcar como verificado o que não foi.
+
+**Acesso disponível nesta verificação**: sessão de agente sem acesso ao dashboard da Cloudflare e sem credencial de API da conta. Confirmado por inspeção: não há `CLOUDFLARE_API_TOKEN` nem equivalente no repositório, nos secrets/variables do GitHub Actions (`gh api .../actions/secrets` e `.../actions/variables` retornam vazio) ou no ambiente local desta sessão; `wrangler whoami` reporta sessão não autenticada. A verificação abaixo cobre exclusivamente o que é observável a partir do repositório — não substitui, e não tenta substituir, a inspeção direta do dashboard, que continua sendo ação humana fora do controle de mudanças.
+
+| # | Item exigido (ADR-0009 §3) | Status nesta verificação | Evidência / limite |
+|---|---|---|---|
+| 1 | A conta utilizada é dedicada ao Developer OS | **Não verificável nesta sessão** | Fato do dashboard da Cloudflare; nenhum acesso disponível neste ambiente a contas ou seus recursos. |
+| 2 | Não existem na conta recursos alheios ao projeto | **Não verificável nesta sessão** | Mesmo limite do item 1. |
+| 3 | O token usado pelo Workers Builds tem apenas as permissões necessárias entre as disponíveis | **Não verificável nesta sessão** | O token é gerado e gerido pela própria Cloudflare (ADR-0009 §3); sua composição de permissões só é visível no dashboard. |
+| 4 | Permissões não necessárias (KV, R2, Routes sem binding correspondente) são removidas quando tecnicamente possível | **Parcialmente observável pelo lado do repositório** | `wrangler.jsonc` não declara nenhum binding de KV, R2, D1, Durable Objects ou Routes — esta aplicação não usa nenhum desses recursos hoje. Isso torna as permissões correspondentes desnecessárias do ponto de vista do código servido, mas **não confirma** que foram de fato removidas do token no dashboard — apenas que removê-las não quebraria nada no repositório. |
+| 5 | Expansão futura do conteúdo da conta é confrontada com C7 (gatilho 11) | **Não é um estado a observar agora** | É obrigação contínua registrada no gatilho 11 do ADR-0009, aplicável a qualquer mudança futura na conta — não um fato verificável num ponto no tempo. |
+
+**O que este registro não faz.** Não afirma que a conta é dedicada, não afirma ausência de recursos alheios, e não afirma que o token foi restringido no dashboard. Se a verificação humana desses itens já ocorreu por fora do repositório — como a Issue #20 presume no Bloco B (item 7, executor "human", anterior ao primeiro deploy real de §13.9.1) —, o resultado dela não havia sido capturado por escrito até este documento, e sua confirmação factual depende do mantenedor, com acesso direto ao dashboard.
+
+**Consequência prática para a Issue #20.** Isto não introduz um novo bloqueio. A própria issue nunca atribuiu a verificação de C7.3 a um agente de IA — o texto já a marca como ação humana fora do diff. O que este documento corrige é a ausência de registro escrito do critério, não a ausência de verificação em si; a verificação continua sendo, como sempre foi, ato humano fora do controle de mudanças.
