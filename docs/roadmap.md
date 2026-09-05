@@ -28,7 +28,7 @@ O Playground ocupava originalmente a Fase 3. Ele foi movido para o fim e **o nú
 
 - [x] Primeiro artigo
 - [x] Página Uses
-- [ ] Página Arquitetura
+- [x] Página Arquitetura
 - [ ] Página Changelog
 - [ ] Página Learning
 

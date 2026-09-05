@@ -24,6 +24,9 @@ function Home() {
         <Link to="/uses" className="text-sm text-muted-foreground hover:text-foreground">
           Uses →
         </Link>
+        <Link to="/architecture" className="text-sm text-muted-foreground hover:text-foreground">
+          Architecture →
+        </Link>
       </div>
     </main>
   )
