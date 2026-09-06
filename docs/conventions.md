@@ -300,6 +300,16 @@ Detalhamento operacional de G6.
 - Diante de decisão arquitetural não documentada, **para e escala na Issue** — não decide e não contorna (`CLAUDE.md` §Human-in-the-loop).
 - **Nunca** executa merge, push em `main`, force-push em branch compartilhada, remoção de branches/tags ou alteração da proteção de `main`.
 
+### 11.9 Plano publicado na Issue e revisão independente de planejamento
+
+Refinamento operacional de G4/G5 e do mecanismo de §11.7, observado a partir do ciclo da Issue #39 (Changelog v1) — não uma propriedade nova, e trocá-lo não exige revisar o ADR-0004.
+
+- **Padrão**: Issue → plano de implementação publicado como comentário na própria Issue → revisão independente de planejamento quando justificada (mesmo critério de §11.7) → plano revisado publicado como **novo** comentário, que substitui o anterior sem apagá-lo → implementação → PR → revisão independente de código quando justificada → decisão humana → squash/merge.
+- **Por que publicar o plano na própria Issue, em vez de repassá-lo por fora entre agentes**: copiar manualmente blocos extensos de plano entre agentes (ex.: Claude, ChatGPT, Codex) transporta texto sem necessidade e cria risco real de perda de contexto ou de um agente revisar uma versão desatualizada. A Issue e seus comentários passam a ser o **ponto central de coordenação**: mesma fonte de verdade para quem planeja, quem revisa e quem implementa, histórico auditável, e versões do plano preservadas em vez de sobrescritas. Um agente de revisão reconstrói o contexto inteiro lendo só a Issue.
+- **Isto é uma melhoria de processo observada neste ciclo, não uma garantia de correção.** Publicar o plano na Issue não substitui nenhuma das camadas de verificação já existentes (G3, §11.6, §11.7).
+- **Quando acionar revisão independente de planejamento**: o mesmo critério de §11.7 para revisão de código — risco arquitetural, mudança de boundary, ou conteúdo/pipeline relevante. Issues simples (conteúdo editorial, ajustes de redação, mudança mecânica) não exigem plano publicado nem revisão independente de planejamento por padrão.
+- **O que isto não altera**: a seletividade de §11.7 continua valendo — revisão independente, de planejamento ou de código, permanece mecanismo **auxiliar**, nunca aprovação, nunca gate obrigatório para toda mudança. A decisão humana de merge (G3) continua o único gate real.
+
 ---
 
 ## 12. Testes
