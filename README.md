@@ -20,6 +20,7 @@ A base documental continua governando o que vier a ser construído.
 | [`docs/design-system.md`](docs/design-system.md) | Fonte única de verdade visual |
 | [`docs/conventions.md`](docs/conventions.md) | Convenções de implementação |
 | [`docs/adr/`](docs/adr/) | Registros de decisão arquitetural |
+| [`docs/checkpoints.md`](docs/checkpoints.md) | Estado do projeto em pontos de retomada |
 
 Em caso de conflito, **ADRs aceitos prevalecem** sobre os demais documentos.
 
