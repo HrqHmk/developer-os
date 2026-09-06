@@ -11,7 +11,7 @@ function Home() {
       <p className="text-lg text-muted-foreground">
         Engineering software. Orchestrating AI. Learning in public.
       </p>
-      <div className="flex gap-4">
+      <div className="flex flex-wrap justify-center gap-4">
         <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground">
           About →
         </Link>
@@ -26,6 +26,9 @@ function Home() {
         </Link>
         <Link to="/architecture" className="text-sm text-muted-foreground hover:text-foreground">
           Architecture →
+        </Link>
+        <Link to="/changelog" className="text-sm text-muted-foreground hover:text-foreground">
+          Changelog →
         </Link>
       </div>
     </main>
