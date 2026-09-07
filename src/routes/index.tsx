@@ -21,6 +21,9 @@ function Home() {
         <Link to="/projects" className="text-sm text-muted-foreground hover:text-foreground">
           Projects →
         </Link>
+        <Link to="/learning" className="text-sm text-muted-foreground hover:text-foreground">
+          Learning →
+        </Link>
         <Link to="/uses" className="text-sm text-muted-foreground hover:text-foreground">
           Uses →
         </Link>
