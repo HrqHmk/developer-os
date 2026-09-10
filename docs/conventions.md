@@ -115,6 +115,10 @@ Convenção estrutural (valores não são definidos aqui):
 
 `docs/design-system.md` continua sendo a SSOT visual: nomes, valores e semântica dos tokens são definidos lá.
 
+**Status de implementação (Dark Mode v1, Issue #44):** `app.css` materializa `.dark` apenas para os três tokens com consumidor real hoje — `--color-background`, `--color-foreground`, `--color-muted-foreground`. Os demais tokens do `design-system.md` permanecem especificação, não implementação, até ganharem consumidor concreto — não é drift entre os dois documentos.
+
+**Cuidado com a variant `dark:` do Tailwind v4:** por padrão ela resolve por `prefers-color-scheme`, não pela classe `.dark`. Nenhuma utility `dark:` existe no projeto hoje; se uma for introduzida no futuro, ela ignora silenciosamente a estratégia de classe adotada aqui, a menos que um `@custom-variant` a redirecione para `.dark`.
+
 ---
 
 ## 7. Componentes e Variantes

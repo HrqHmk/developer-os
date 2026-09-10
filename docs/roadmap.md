@@ -37,7 +37,7 @@ O Playground ocupava originalmente a Fase 3. Ele foi movido para o fim e **o nú
 ## Fase 4 — Experiência
 
 - [ ] Busca
-- [ ] Dark Mode
+- [x] Dark Mode
 - [ ] Newsletter
 - [ ] RSS
 - [ ] Analytics

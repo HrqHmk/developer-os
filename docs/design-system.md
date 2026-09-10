@@ -25,6 +25,12 @@ visual concreta. Componentes de bibliotecas externas devem ser adaptados aos
 tokens já definidos aqui no momento da integração, em vez de expandir a paleta
 para acomodar convenções de token próprias dessas bibliotecas.
 
+As tabelas abaixo são a especificação completa, Light e Dark. A implementação
+em `app.css` (Dark Mode v1, Issue #44) materializa `.dark` apenas para
+`background`, `foreground` e `muted-foreground` — os únicos com consumidor
+real hoje. Os demais tokens permanecem só especificados até ganharem
+consumidor concreto; ver `docs/conventions.md` §6.
+
 #### Light
 
 | Token | Valor sugerido | Uso |
