@@ -2,9 +2,17 @@
 @import '@fontsource-variable/geist';
 
 :root {
+  color-scheme: light;
   --color-background: #fafafa;
   --color-foreground: #111315;
   --color-muted-foreground: #62666d;
+}
+
+.dark {
+  color-scheme: dark;
+  --color-background: #090c11;
+  --color-foreground: #f4f4f5;
+  --color-muted-foreground: #9ca3af;
 }
 
 @theme inline {
