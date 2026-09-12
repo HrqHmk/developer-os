@@ -16,6 +16,7 @@ import { Route as BlogRouteImport } from './routes/blog'
 import { Route as ChangelogRouteImport } from './routes/changelog'
 import { Route as LearningRouteImport } from './routes/learning'
 import { Route as ProjectsRouteImport } from './routes/projects'
+import { Route as SearchRouteImport } from './routes/search'
 import { Route as UsesRouteImport } from './routes/uses'
 import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
@@ -57,6 +58,11 @@ const ProjectsRoute = ProjectsRouteImport.update({
   path: '/projects',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SearchRoute = SearchRouteImport.update({
+  id: '/search',
+  path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const UsesRoute = UsesRouteImport.update({
   id: '/uses',
   path: '/uses',
@@ -91,6 +97,7 @@ export interface FileRoutesByFullPath {
   '/changelog': typeof ChangelogRoute
   '/learning': typeof LearningRoute
   '/projects': typeof ProjectsRouteWithChildren
+  '/search': typeof SearchRoute
   '/uses': typeof UsesRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/projects/$slug': typeof ProjectsSlugRoute
@@ -103,6 +110,7 @@ export interface FileRoutesByTo {
   '/architecture': typeof ArchitectureRoute
   '/changelog': typeof ChangelogRoute
   '/learning': typeof LearningRoute
+  '/search': typeof SearchRoute
   '/uses': typeof UsesRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/projects/$slug': typeof ProjectsSlugRoute
@@ -118,6 +126,7 @@ export interface FileRoutesById {
   '/changelog': typeof ChangelogRoute
   '/learning': typeof LearningRoute
   '/projects': typeof ProjectsRouteWithChildren
+  '/search': typeof SearchRoute
   '/uses': typeof UsesRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/projects/$slug': typeof ProjectsSlugRoute
@@ -134,6 +143,7 @@ export interface FileRouteTypes {
     | '/changelog'
     | '/learning'
     | '/projects'
+    | '/search'
     | '/uses'
     | '/blog/$slug'
     | '/projects/$slug'
@@ -146,6 +156,7 @@ export interface FileRouteTypes {
     | '/architecture'
     | '/changelog'
     | '/learning'
+    | '/search'
     | '/uses'
     | '/blog/$slug'
     | '/projects/$slug'
@@ -160,6 +171,7 @@ export interface FileRouteTypes {
     | '/changelog'
     | '/learning'
     | '/projects'
+    | '/search'
     | '/uses'
     | '/blog/$slug'
     | '/projects/$slug'
@@ -175,6 +187,7 @@ export interface RootRouteChildren {
   ChangelogRoute: typeof ChangelogRoute
   LearningRoute: typeof LearningRoute
   ProjectsRoute: typeof ProjectsRouteWithChildren
+  SearchRoute: typeof SearchRoute
   UsesRoute: typeof UsesRoute
 }
 
@@ -227,6 +240,13 @@ declare module '@tanstack/react-router' {
       path: '/projects'
       fullPath: '/projects'
       preLoaderRoute: typeof ProjectsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/search': {
+      id: '/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof SearchRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/uses': {
@@ -301,6 +321,7 @@ const rootRouteChildren: RootRouteChildren = {
   ChangelogRoute: ChangelogRoute,
   LearningRoute: LearningRoute,
   ProjectsRoute: ProjectsRouteWithChildren,
+  SearchRoute: SearchRoute,
   UsesRoute: UsesRoute,
 }
 export const routeTree = rootRouteImport

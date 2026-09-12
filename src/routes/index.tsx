@@ -33,6 +33,9 @@ function Home() {
         <Link to="/changelog" className="text-sm text-muted-foreground hover:text-foreground">
           Changelog →
         </Link>
+        <Link to="/search" className="text-sm text-muted-foreground hover:text-foreground">
+          Search →
+        </Link>
       </div>
     </main>
   )
