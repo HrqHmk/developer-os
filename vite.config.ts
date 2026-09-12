@@ -9,6 +9,7 @@ import { buildProjects } from './src/content/pipeline/build-projects.ts'
 import { virtualProjectsPlugin } from './src/content/pipeline/virtual-projects-plugin.ts'
 import { buildChangelog } from './src/content/pipeline/build-changelog.ts'
 import { virtualChangelogPlugin } from './src/content/pipeline/virtual-changelog-plugin.ts'
+import { rssAssetPlugin } from './src/content/pipeline/rss-asset-plugin.ts'
 
 // Compiled once here; each snapshot is then distributed to its own virtual
 // module — a single canonical build per content type, not the same
@@ -34,6 +35,7 @@ export default defineConfig({
       },
     }),
     virtualArticlesPlugin(articles),
+    rssAssetPlugin(articles),
     virtualProjectsPlugin(projects),
     virtualChangelogPlugin(changelogEntries),
     viteReact(),
