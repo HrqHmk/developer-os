@@ -14,7 +14,10 @@ export const Route = createRootRoute({
       },
       { title: 'Developer OS' },
     ],
-    links: [{ rel: 'stylesheet', href: appCss }],
+    links: [
+      { rel: 'stylesheet', href: appCss },
+      { rel: 'alternate', type: 'application/rss+xml', href: '/rss.xml' },
+    ],
   }),
   component: RootComponent,
 })
