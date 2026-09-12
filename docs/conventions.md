@@ -325,12 +325,19 @@ Convenções derivadas do ADR-0005. As propriedades duráveis (T1–T11) estão 
 | Camada | Ferramenta | Instalada quando |
 |---|---|---|
 | Unitário e integração | Vitest (`4.1.11`) | primeiro código de `src/content/pipeline/` |
-| Componente | React Testing Library (16.3.x) + user-event (14.6.x), ambiente jsdom (30.x) | primeiro componente com comportamento próprio |
+| Componente | React Testing Library (16.3.x) + `@testing-library/dom` (10.4.x, peer obrigatório) + user-event (14.6.x), ambiente jsdom (30.x) | primeiro componente com comportamento próprio |
 | E2E | Playwright (1.62.x) | primeiro fluxo E2E obrigatório, idealmente junto do CI/CD |
 
 Nenhuma dependência de teste é instalada antes disso (T10). As versões seguem §2: fixadas pelo lockfile, atualizadas de forma deliberada.
 
 **Instalado a partir da Issue #29**, versão `4.1.11`, junto do primeiro código de `src/content/pipeline/`. Config dedicada em `vitest.config.ts` (ambiente Node padrão, sem os plugins de `vite.config.ts` — evita fricção com `@cloudflare/vite-plugin`/`tanstackStart` no test runner, que não têm papel nenhum na execução de testes de módulos puros).
+
+**Camada de componente instalada a partir da Issue #48**, junto do primeiro componente com comportamento próprio coberto por teste (`src/components/search-panel.tsx`): `@testing-library/react` `16.3.3`, `@testing-library/dom` `10.4.1`, `@testing-library/user-event` `14.6.7` e `jsdom` `30.0.1`, todas como `devDependencies` em versão exata.
+
+- **`@testing-library/dom` é `peerDependency` do React Testing Library 16** e por isso entra como dependência direta e explícita — omiti-la produz erro de resolução, não um erro legível.
+- **jsdom não é configurado globalmente**: o ambiente é declarado por arquivo (§12.2), porque a maioria dos testes roda em Node e pagaria o custo à toa.
+- **`vitest.config.ts` passou a incluir `src/**/*.test.tsx`** além de `src/**/*.test.ts`. O padrão anterior não casava com testes de componente: eles simplesmente não seriam executados, e a suíte continuaria verde — falha silenciosa, não erro.
+- A config dedicada **continua sem os plugins de `vite.config.ts`**. A transformação de JSX vem do `jsx: "react-jsx"` do `tsconfig.json`, respeitado pelo esbuild do Vite.
 
 ### 12.2 Localização e nomenclatura
 
