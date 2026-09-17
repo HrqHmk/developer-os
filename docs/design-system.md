@@ -26,10 +26,15 @@ tokens já definidos aqui no momento da integração, em vez de expandir a palet
 para acomodar convenções de token próprias dessas bibliotecas.
 
 As tabelas abaixo são a especificação completa, Light e Dark. A implementação
-em `app.css` (Dark Mode v1, Issue #44) materializa `.dark` apenas para
-`background`, `foreground` e `muted-foreground` — os únicos com consumidor
-real hoje. Os demais tokens permanecem só especificados até ganharem
-consumidor concreto; ver `docs/conventions.md` §6.
+em `app.css` (Dark Mode v1, Issue #44; Newsletter v1, Issue #53) materializa
+`.dark` apenas para `background`, `foreground`, `muted-foreground` e
+`destructive` — os únicos com consumidor real hoje. Os demais tokens
+permanecem só especificados até ganharem consumidor concreto; ver
+`docs/conventions.md` §6.
+
+`destructive` ganhou consumidor na mensagem de erro de validação do
+formulário de Newsletter. `destructive-foreground` não: o erro é texto sobre
+o fundo da página, não sobre uma superfície destrutiva.
 
 #### Light
 
