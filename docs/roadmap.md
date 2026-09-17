@@ -8,6 +8,8 @@ As fases são ordenadas por dependência e por risco.
 
 O Playground ocupava originalmente a Fase 3. Ele foi movido para o fim e **o número 3 não foi reaproveitado**: as demais fases mantêm a numeração original para que as referências dos ADRs aceitos permaneçam válidas, já que ADRs aceitos não são reescritos (`conventions.md` §10). As únicas referências que envelheceram são as que apontam o Playground como Fase 3 — em ADR-0001, ADR-0005 e ADR-0007 —, e elas envelheceram porque foi exatamente isso que mudou.
 
+**Próximo ciclo antes de Launch / Production Readiness: Homepage Visual Refresh v1.** A Fase 4 segue com Analytics em aberto; Homepage Visual Refresh v1 é o ciclo seguinte já definido, ainda sem Issue própria neste roadmap até ser aberta.
+
 **Futuro** não é uma fase: é backlog sem ordem definida nem compromisso de execução, e não está sequenciado depois da Fase 6.
 
 ---
@@ -38,13 +40,15 @@ O Playground ocupava originalmente a Fase 3. Ele foi movido para o fim e **o nú
 
 - [x] Busca
 - [x] Dark Mode
-- [ ] Newsletter
+- [x] Newsletter
 - [x] RSS
 - [ ] Analytics
 
 ---
 
 ## Fase 5 — Integrações
+
+**Status: DEFERRED / POST-LAUNCH EVOLUTION.** Congelada deliberadamente para depois do lançamento do Developer OS v1 — não é abandono, é sequenciamento: os itens abaixo permanecem candidatos, sem compromisso de execução nem prazo, e só voltam a ser trabalhados por decisão humana explícita.
 
 - [ ] GitHub
 - [ ] LinkedIn
