@@ -6,6 +6,7 @@
   --color-background: #fafafa;
   --color-foreground: #111315;
   --color-muted-foreground: #62666d;
+  --color-destructive: #c43d4f;
 }
 
 .dark {
@@ -13,12 +14,14 @@
   --color-background: #090c11;
   --color-foreground: #f4f4f5;
   --color-muted-foreground: #9ca3af;
+  --color-destructive: #ce4257;
 }
 
 @theme inline {
   --color-background: var(--color-background);
   --color-foreground: var(--color-foreground);
   --color-muted-foreground: var(--color-muted-foreground);
+  --color-destructive: var(--color-destructive);
   --font-sans: 'Geist Variable', system-ui, sans-serif;
 }
 
