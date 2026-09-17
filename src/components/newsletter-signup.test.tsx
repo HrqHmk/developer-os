@@ -129,7 +129,7 @@ describe('NewsletterSignup — behaviour', () => {
     expect(emailField().disabled).toBe(false)
   })
 
-  it('settles into the neutral message once the fixed delay elapses', async () => {
+  it('settles into the neutral message once the fixed delay elapses, and leaves it once the visitor types again', async () => {
     const { user, form } = setup()
 
     await user.type(emailField(), 'reader@example.com')
@@ -145,10 +145,27 @@ describe('NewsletterSignup — behaviour', () => {
     expect(
       screen.getByText('Solicitação enviada. Confira seu e-mail para confirmar a inscrição.'),
     ).toBeDefined()
+    // The recovery fallback (Decision #4/§4 of the plan) belongs to the same
+    // `sent` state and to no other — it has to be live here too.
+    expect(screen.getByRole('link', { name: 'diretamente no Buttondown' })).toBeDefined()
     expect(emailField().value).toBe('')
     expect(emailField().readOnly).toBe(false)
     expect(subscribeButton().hasAttribute('disabled')).toBe(false)
     expect(form.getAttribute('aria-busy')).toBe('false')
+
+    // Decision #4: the neutral message and the fallback leave only when the
+    // visitor starts typing again — never on submit itself, which would read
+    // as "nothing happened". `fireEvent`, not `user.type`: fake timers are
+    // active by this point in the test, and user-event does not settle
+    // under them (see the file header).
+    fireEvent.change(emailField(), { target: { value: 'r' } })
+
+    expect(
+      screen.queryByText('Solicitação enviada. Confira seu e-mail para confirmar a inscrição.'),
+    ).toBeNull()
+    expect(screen.queryByRole('link', { name: 'diretamente no Buttondown' })).toBeNull()
+    // The keystroke that triggered the transition is not swallowed by it.
+    expect(emailField().value).toBe('r')
   })
 
   it('cancels a second submit fired inside the synchronous guard window', () => {
