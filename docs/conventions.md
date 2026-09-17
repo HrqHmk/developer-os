@@ -115,9 +115,11 @@ Convenção estrutural (valores não são definidos aqui):
 
 `docs/design-system.md` continua sendo a SSOT visual: nomes, valores e semântica dos tokens são definidos lá.
 
-**Status de implementação (Dark Mode v1, Issue #44; Newsletter v1, Issue #53):** `app.css` materializa `.dark` apenas para os quatro tokens com consumidor real hoje — `--color-background`, `--color-foreground`, `--color-muted-foreground` e `--color-destructive`. Os demais tokens do `design-system.md` permanecem especificação, não implementação, até ganharem consumidor concreto — não é drift entre os dois documentos.
+**Status de implementação (Dark Mode v1, Issue #44; Newsletter v1, Issue #53; Homepage Visual Refresh v1, Issue #57):** `app.css` materializa `.dark` para os tokens com consumidor real hoje — `--color-background`, `--color-foreground`, `--color-muted-foreground`, `--color-destructive`, `--color-ring`, `--color-border`, `--color-card`, `--color-primary`, `--color-primary-hover`, `--color-primary-foreground`, `--color-secondary`, `--color-secondary-foreground` e `--color-success`. Os demais tokens do `design-system.md` permanecem especificação, não implementação, até ganharem consumidor concreto — não é drift entre os dois documentos.
 
 `--color-destructive` entrou com a mensagem de erro de validação do formulário de Newsletter, seu primeiro consumidor concreto. `--color-destructive-foreground` continua apenas especificado: o erro é texto sobre o fundo da página, não sobre uma superfície destrutiva. Materializar um token exige a linha em `@theme inline` além das declarações em `:root` e `.dark` — sem ela a utility correspondente não é gerada.
+
+A Homepage Visual Refresh v1 (Issue #57) materializou `ring`, `border`, `card`, `primary`/`primary-hover`/`primary-foreground`, `secondary`/`secondary-foreground` e `success` — consumidores em `HomeHeader` e nas seções da home (`design-system.md` tem o detalhe por token). `--radius-md` (12px) e `--radius-lg` (16px) também passaram a ser declarados explicitamente em `@theme`, como o §4 exige para escalas que divergem dos defaults do Tailwind.
 
 **Cuidado com a variant `dark:` do Tailwind v4:** por padrão ela resolve por `prefers-color-scheme`, não pela classe `.dark`. Nenhuma utility `dark:` existe no projeto hoje; se uma for introduzida no futuro, ela ignora silenciosamente a estratégia de classe adotada aqui, a menos que um `@custom-variant` a redirecione para `.dark`.
 

@@ -26,15 +26,26 @@ tokens já definidos aqui no momento da integração, em vez de expandir a palet
 para acomodar convenções de token próprias dessas bibliotecas.
 
 As tabelas abaixo são a especificação completa, Light e Dark. A implementação
-em `app.css` (Dark Mode v1, Issue #44; Newsletter v1, Issue #53) materializa
-`.dark` apenas para `background`, `foreground`, `muted-foreground` e
-`destructive` — os únicos com consumidor real hoje. Os demais tokens
-permanecem só especificados até ganharem consumidor concreto; ver
-`docs/conventions.md` §6.
+em `app.css` (Dark Mode v1, Issue #44; Newsletter v1, Issue #53; Homepage
+Visual Refresh v1, Issue #57) materializa `.dark` para `background`,
+`foreground`, `muted-foreground`, `destructive`, `ring`, `border`, `card`,
+`primary`, `primary-hover`, `primary-foreground`, `secondary`,
+`secondary-foreground` e `success` — os únicos com consumidor real hoje. Os
+demais tokens permanecem só especificados até ganharem consumidor concreto;
+ver `docs/conventions.md` §6.
 
 `destructive` ganhou consumidor na mensagem de erro de validação do
 formulário de Newsletter. `destructive-foreground` não: o erro é texto sobre
 o fundo da página, não sobre uma superfície destrutiva.
+
+A Homepage Visual Refresh v1 (Issue #57) materializou `ring` (foco visível no
+`HomeHeader` e nos CTAs/cards da home), `border` e `card` (cards de Featured
+Projects e Writing & Learning), `primary`/`primary-hover`/`primary-foreground`
+(CTA "Explore Projects"), `secondary`/`secondary-foreground` (CTA "Read the
+Blog") e `success` (ponto de status decorativo do badge do Hero).
+`card-foreground` não: o texto dos cards usa `foreground`/`muted-foreground`,
+não um token próprio. `radius-md` (12px) e `radius-lg` (16px) também passaram
+a ser declarados explicitamente em `@theme`, conforme `conventions.md` §4.
 
 #### Light
 
