@@ -23,7 +23,7 @@ const FOCUS_RING = 'outline-none focus-visible:outline-2 focus-visible:outline-o
  */
 export function HomeHeader() {
   return (
-    <header className="flex flex-col gap-4 px-6 py-6 md:flex-row md:items-center md:justify-between">
+    <header className="flex flex-col items-start gap-4 px-6 py-6 md:flex-row md:items-center md:justify-between">
       <Link to="/" className={`text-lg font-semibold text-foreground ${FOCUS_RING}`}>
         Developer OS
       </Link>

@@ -31,7 +31,7 @@ function Home() {
 
 function Hero() {
   return (
-    <section className="relative isolate overflow-hidden px-6 py-20 text-center">
+    <section className="relative isolate overflow-hidden px-6 py-16 text-center">
       <div aria-hidden="true" className="hero-backdrop" />
       <div className="relative mx-auto flex max-w-2xl flex-col items-center gap-6">
         <p className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-1 text-sm text-muted-foreground">
