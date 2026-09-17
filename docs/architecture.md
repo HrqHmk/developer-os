@@ -109,7 +109,9 @@ developer-os/
 
 Testes unitários e de integração ficam **co-locados** com o código que verificam, dentro de `src/`, e não em diretório próprio. `tests/` é reservado ao E2E, que não tem código-fonte correspondente para acompanhar. Ver ADR-0005 e `conventions.md` §12.
 
-Esta é a estrutura-alvo: diretórios nascem quando há código que os justifique (`architecture.md` §11), não antecipadamente. `src/routes/`, `src/content/` (ADR-0003, desde o Blog), `src/lib/` e `src/components/` já existem. `src/components/` foi introduzido por `theme-control.tsx` (Dark Mode, Issue #44) e hoje também é usado por `search-panel.tsx` (Search v1, Issue #48) — o critério é responsabilidade clara ou reutilização real (`conventions.md` §7), não antecipação. `src/integrations/` ainda não — aparece quando a necessidade correspondente (primeira integração externa) existir.
+Esta é a estrutura-alvo: diretórios nascem quando há código que os justifique (`architecture.md` §11), não antecipadamente. `src/routes/`, `src/content/` (ADR-0003, desde o Blog), `src/lib/` e `src/components/` já existem. `src/components/` foi introduzido por `theme-control.tsx` (Dark Mode, Issue #44) e hoje também é usado por `search-panel.tsx` (Search v1, Issue #48) e `newsletter-signup.tsx` (Newsletter v1, Issue #53) — o critério é responsabilidade clara ou reutilização real (`conventions.md` §7), não antecipação. `src/integrations/` ainda não — aparece quando a necessidade correspondente (primeira integração externa) existir.
+
+**Por que a Newsletter não criou `src/integrations/`:** o modelo de integração escolhido na Issue #53 é um `<form>` HTML nativo que o browser submete direto ao endpoint público do provider, com a resposta confinada a um iframe oculto. Não existe adaptador traduzindo evento de domínio em payload de fornecedor, nem chamada de rede feita pelo projeto, nem credencial — não há camada de mapeamento para isolar. Criar `src/integrations/newsletter.ts` produziria um arquivo sem responsabilidade própria, contra `architecture.md` §11. O gatilho de `src/integrations/` continua sendo a primeira integração que de fato tenha o que mapear.
 
 ---
 
@@ -138,11 +140,12 @@ Possíveis integrações futuras:
 - GitHub;
 - LinkedIn;
 - analytics;
-- newsletter;
 - provedores de IA;
 - outras APIs externas.
 
 Integrações devem permanecer isoladas da lógica principal da aplicação.
+
+**Newsletter (Issue #53)** deixou de ser integração futura: está implementada em `src/components/newsletter-signup.tsx`, com Buttondown como provider. O isolamento aqui é estrutural, não convencional — o browser submete o formulário direto ao provider e a resposta fica contida em um iframe oculto, de modo que indisponibilidade do fornecedor não alcança nenhuma outra parte da aplicação. Sem backend, sem server function, sem credencial e sem base de assinantes própria; a confirmação da inscrição é o double opt-in do provider.
 
 ---
 

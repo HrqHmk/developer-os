@@ -1,5 +1,6 @@
 import { Link, createFileRoute, notFound } from '@tanstack/react-router'
 import { articles } from 'virtual:articles'
+import { NewsletterSignup } from '../components/newsletter-signup.tsx'
 import { formatPublishedAt } from '../lib/format-published-at.ts'
 
 export const Route = createFileRoute('/blog/$slug')({
@@ -28,6 +29,7 @@ function BlogArticle() {
       {/* Safe here: `html` is build-time output of the project's own content
           pipeline (versioned Markdown, validated in build), never user input. */}
       <div className="article-body" dangerouslySetInnerHTML={{ __html: article.html }} />
+      <NewsletterSignup />
       <Link to="/blog" className="text-sm text-muted-foreground hover:text-foreground">
         ← Blog
       </Link>
