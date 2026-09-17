@@ -67,12 +67,12 @@ function watchSubmit() {
 
 function emailField(): HTMLInputElement {
   return screen.getByRole('textbox', {
-    name: 'Receba atualizações do Developer OS por e-mail',
+    name: 'Get Developer OS updates by email',
   }) as HTMLInputElement
 }
 
 function subscribeButton() {
-  return screen.getByRole('button', { name: 'Inscrever' })
+  return screen.getByRole('button', { name: 'Subscribe' })
 }
 
 afterEach(() => {
@@ -99,7 +99,7 @@ describe('NewsletterSignup — behaviour', () => {
     await user.click(subscribeButton())
 
     const error = screen.getByRole('alert')
-    expect(error.textContent).toBe('Informe um endereço de e-mail válido.')
+    expect(error.textContent).toBe('Enter a valid email address.')
     expect(emailField().getAttribute('aria-invalid')).toBe('true')
     expect(emailField().getAttribute('aria-describedby')).toBe(error.getAttribute('id'))
 
@@ -143,11 +143,11 @@ describe('NewsletterSignup — behaviour', () => {
     // The exact copy frozen in Decision #4: it reports that the request left,
     // never that a subscription exists.
     expect(
-      screen.getByText('Solicitação enviada. Confira seu e-mail para confirmar a inscrição.'),
+      screen.getByText('Request sent. Check your inbox to confirm your subscription. If nothing arrives in a few minutes, try again.'),
     ).toBeDefined()
     // The recovery fallback (Decision #4/§4 of the plan) belongs to the same
     // `sent` state and to no other — it has to be live here too.
-    expect(screen.getByRole('link', { name: 'diretamente no Buttondown' })).toBeDefined()
+    expect(screen.getByRole('link', { name: 'Buttondown' })).toBeDefined()
     expect(emailField().value).toBe('')
     expect(emailField().readOnly).toBe(false)
     expect(subscribeButton().hasAttribute('disabled')).toBe(false)
@@ -161,9 +161,9 @@ describe('NewsletterSignup — behaviour', () => {
     fireEvent.change(emailField(), { target: { value: 'r' } })
 
     expect(
-      screen.queryByText('Solicitação enviada. Confira seu e-mail para confirmar a inscrição.'),
+      screen.queryByText('Request sent. Check your inbox to confirm your subscription. If nothing arrives in a few minutes, try again.'),
     ).toBeNull()
-    expect(screen.queryByRole('link', { name: 'diretamente no Buttondown' })).toBeNull()
+    expect(screen.queryByRole('link', { name: 'Buttondown' })).toBeNull()
     // The keystroke that triggered the transition is not swallowed by it.
     expect(emailField().value).toBe('r')
   })
@@ -279,7 +279,7 @@ describe('NewsletterSignup — Model D structural contract', () => {
     // a missing nicety. It belongs to the neutral state and to no other.
     const { user } = setup()
 
-    expect(screen.queryByRole('link', { name: 'diretamente no Buttondown' })).toBeNull()
+    expect(screen.queryByRole('link', { name: 'Buttondown' })).toBeNull()
 
     await user.type(emailField(), 'reader@example.com')
     vi.useFakeTimers()
@@ -288,7 +288,7 @@ describe('NewsletterSignup — Model D structural contract', () => {
       vi.advanceTimersByTime(SENT_DELAY_MS)
     })
 
-    const fallback = screen.getByRole('link', { name: 'diretamente no Buttondown' })
+    const fallback = screen.getByRole('link', { name: 'Buttondown' })
     expect(fallback.getAttribute('href')).toBe(HOSTED_URL)
   })
 

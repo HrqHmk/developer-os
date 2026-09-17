@@ -110,7 +110,7 @@ export function NewsletterSignup() {
         className="space-y-3"
       >
         <label htmlFor={emailId} className="block text-sm text-muted-foreground">
-          Receba atualizações do Developer OS por e-mail
+          Get Developer OS updates by email
         </label>
 
         <div className="flex flex-wrap gap-2">
@@ -136,7 +136,7 @@ export function NewsletterSignup() {
             disabled={state === 'submitting'}
             className="border border-foreground px-3 py-2 text-sm text-foreground"
           >
-            Inscrever
+            Subscribe
           </button>
         </div>
 
@@ -159,7 +159,7 @@ export function NewsletterSignup() {
 
         {state === 'invalid' && (
           <p id={errorId} role="alert" className="text-sm text-destructive">
-            Informe um endereço de e-mail válido.
+            Enter a valid email address.
           </p>
         )}
 
@@ -170,16 +170,17 @@ export function NewsletterSignup() {
           {state === 'sent' && (
             <>
               <p className="text-sm text-muted-foreground">
-                Solicitação enviada. Confira seu e-mail para confirmar a inscrição.
+                Request sent. Check your inbox to confirm your subscription. If nothing arrives
+                in a few minutes, try again.
               </p>
               {/* Recovery route, not a second placement: when Buttondown
                   answers with a CAPTCHA or a correction, that response is
                   swallowed by the hidden iframe and the subscriber never sees
                   it. This link is how they finish anyway. */}
               <p className="text-sm text-muted-foreground">
-                Não recebeu o e-mail? Tente concluir a inscrição{' '}
+                Having trouble? Subscribe directly on{' '}
                 <a href={BUTTONDOWN_HOSTED_URL} className="underline underline-offset-2">
-                  diretamente no Buttondown
+                  Buttondown
                 </a>
                 .
               </p>
@@ -188,12 +189,11 @@ export function NewsletterSignup() {
         </div>
 
         <p className="text-sm text-muted-foreground">
-          Seu e-mail é processado pelo Buttondown, o serviço que hospeda esta newsletter. Veja
-          a{' '}
+          Your email is processed by Buttondown, the service that hosts this newsletter. See{' '}
           <a href={BUTTONDOWN_PRIVACY_URL} className="underline underline-offset-2">
-            política de privacidade do Buttondown
+            Buttondown's privacy policy
           </a>
-          . Você pode cancelar sua inscrição a qualquer momento.
+          . You can unsubscribe at any time.
         </p>
       </form>
 
