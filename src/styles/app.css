@@ -7,6 +7,15 @@
   --color-foreground: #111315;
   --color-muted-foreground: #62666d;
   --color-destructive: #c43d4f;
+  --color-ring: #8b8f97;
+  --color-border: #e2e4e7;
+  --color-card: #f7f7f8;
+  --color-primary: #111315;
+  --color-primary-hover: #202328;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #f1f2f3;
+  --color-secondary-foreground: #202328;
+  --color-success: #4dbe70;
 }
 
 .dark {
@@ -15,6 +24,15 @@
   --color-foreground: #f4f4f5;
   --color-muted-foreground: #9ca3af;
   --color-destructive: #ce4257;
+  --color-ring: #7764e8;
+  --color-border: #282e38;
+  --color-card: #12171f;
+  --color-primary: #7057e8;
+  --color-primary-hover: #8069f0;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #171c25;
+  --color-secondary-foreground: #eceef2;
+  --color-success: #4fd17a;
 }
 
 @theme inline {
@@ -22,7 +40,46 @@
   --color-foreground: var(--color-foreground);
   --color-muted-foreground: var(--color-muted-foreground);
   --color-destructive: var(--color-destructive);
+  --color-ring: var(--color-ring);
+  --color-border: var(--color-border);
+  --color-card: var(--color-card);
+  --color-primary: var(--color-primary);
+  --color-primary-hover: var(--color-primary-hover);
+  --color-primary-foreground: var(--color-primary-foreground);
+  --color-secondary: var(--color-secondary);
+  --color-secondary-foreground: var(--color-secondary-foreground);
+  --color-success: var(--color-success);
   --font-sans: 'Geist Variable', system-ui, sans-serif;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+}
+
+/*
+ * Homepage hero backdrop (Issue #57): a barely-visible glow plus a faint
+ * dotted grid, sitting behind the hero content and never touching its
+ * contrast. Pure CSS, no image asset — `color-mix()` derives the glow
+ * directly from `--color-primary`, so it reads as a faint neutral in light
+ * mode and a faint violet in dark mode with no `dark:` utilities and no
+ * hardcoded hex (see `conventions.md` §6 on the `dark:` variant trap).
+ */
+.hero-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image:
+    radial-gradient(
+      circle at 50% 0%,
+      color-mix(in srgb, var(--color-primary) 16%, transparent),
+      transparent 60%
+    ),
+    radial-gradient(circle, var(--color-border) 1px, transparent 1px);
+  background-size:
+    100% 100%,
+    24px 24px;
+  background-position:
+    0 0,
+    0 0;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, black, transparent 75%);
 }
 
 /*

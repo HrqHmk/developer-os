@@ -1,5 +1,6 @@
 import { useEffect, useId, useState } from 'react'
 import type { ChangeEvent } from 'react'
+import { useRouterState } from '@tanstack/react-router'
 import {
   DARK_MEDIA_QUERY,
   applyResolvedTheme,
@@ -10,11 +11,14 @@ import {
 } from '../lib/theme'
 
 /**
- * Global theme control: System / Light / Dark. Starts at 'system' to match
- * the server render (the pre-paint bootstrap in `__root.tsx` already applied
- * the resolved `.dark` class before this component mounts), then syncs to
- * the stored preference on mount. Fixed top-right — see the Dark Mode v1
- * plan (Issue #44) for why this control does not get a header/navbar.
+ * Theme control: System / Light / Dark. Starts at 'system' to match the
+ * server render (the pre-paint bootstrap in `__root.tsx` already applied the
+ * resolved `.dark` class before this component mounts), then syncs to the
+ * stored preference on mount.
+ *
+ * Renders no positioning of its own — `HomeHeader` places it inline on `/`,
+ * and `FloatingThemeControl` below places it everywhere else (Homepage
+ * Visual Refresh v1, Issue #57).
  */
 export function ThemeControl() {
   const selectId = useId()
@@ -44,7 +48,7 @@ export function ThemeControl() {
   }
 
   return (
-    <div className="fixed top-4 right-4 z-50">
+    <>
       <label htmlFor={selectId} className="sr-only">
         Theme
       </label>
@@ -58,6 +62,25 @@ export function ThemeControl() {
         <option value="light">Light</option>
         <option value="dark">Dark</option>
       </select>
+    </>
+  )
+}
+
+/**
+ * Global floating placement of `ThemeControl` — fixed top-right, unchanged
+ * since Dark Mode v1 (Issue #44). Renders nothing on `/`: the homepage's
+ * `HomeHeader` renders `ThemeControl` inline instead, so there is exactly
+ * one effective instance on every route (Homepage Visual Refresh v1, Issue
+ * #57). Deterministic from the URL, so server and client render the same
+ * thing — no portal, no hydration mismatch.
+ */
+export function FloatingThemeControl() {
+  const pathname = useRouterState({ select: (state) => state.location.pathname })
+  if (pathname === '/') return null
+
+  return (
+    <div className="fixed top-4 right-4 z-50">
+      <ThemeControl />
     </div>
   )
 }
