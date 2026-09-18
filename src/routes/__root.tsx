@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { Outlet, createRootRoute, HeadContent, Scripts } from '@tanstack/react-router'
 import appCss from '../styles/app.css?url'
 import { THEME_BOOTSTRAP_SCRIPT } from '../lib/theme'
-import { ThemeControl } from '../components/theme-control'
+import { FloatingThemeControl } from '../components/theme-control'
 
 export const Route = createRootRoute({
   head: () => ({
@@ -41,7 +41,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP_SCRIPT }} />
       </head>
       <body className="bg-background font-sans text-foreground">
-        <ThemeControl />
+        <FloatingThemeControl />
         {children}
         <Scripts />
       </body>
