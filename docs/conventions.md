@@ -621,11 +621,23 @@ Mesma forma e mesma razão do §13.7: parte da configuração não é versionáv
 | Código do site | o valor de `GOATCOUNTER_SITE_CODE` em `src/integrations/analytics.ts` | público por construção; não é segredo, D9 não acionada |
 | Coleta de pageviews individuais | **desligada** — o fornecedor a desliga por padrão, mas o padrão é **verificado, não presumido** | A2 |
 | Painel | **privado**; sem página pública de estatísticas | ADR-0007 §5 |
-| Método de pagamento e limites | **nenhum método de pagamento anexado**; atingir qualquer limite gratuito **interrompe a coleta**, não faz upgrade nem cobra | A6, revalidada na instalação e a cada troca de fornecedor ou plano |
-| Vínculo do domínio `developeros.dev` na Cloudflare | forma do vínculo (Custom Domain ou Route) e estado do proxy — **a registrar** | C5 (§13.7); ADR-0010 §2 |
+| Método de pagamento e limites | **nenhum método de pagamento anexado**; atingir o limite gratuito **não gera cobrança nem upgrade sem ação humana** | A6, revalidada na instalação e a cada troca de fornecedor ou plano |
+| Vínculo do domínio `developeros.dev` na Cloudflare | forma do vínculo (Custom Domain ou Route) e estado do proxy **registrados** | C5 (§13.7); ADR-0010 §2 |
 | Build variables e secrets | **nenhuma** (inalterado) | §13.7 |
 
-**Registro da configuração.** Ainda não executada: a criação da conta, a verificação de A2 e A6 e a leitura do vínculo do domínio são ações humanas do Plano v4 §11 e serão registradas aqui, com data e sem presumir o resultado, antes de o PR de implementação ser integrado.
+**Registro da configuração (2026-09-19).** Verificada pelo mantenedor no dashboard de cada fornecedor — não observável pelo repositório nem por um agente — e informada por escrito antes da instalação:
+
+| Campo | Registrado |
+|---|---|
+| Site | `hrqhm` — endpoint `https://hrqhm.goatcounter.com/count`; domínio de produção `developeros.dev` |
+| Pageviews individuais (A2) | **desativados** |
+| Painel | **privado**, acessível apenas a usuários autenticados |
+| Conta e método de pagamento (A6) | conta **gratuita**, **sem método de pagamento cadastrado** |
+| Limite gratuito (A6) | **100.000 pageviews/mês**, conforme informado pelo mantenedor; o ADR-0007 §4 registra que esse número circula em fontes secundárias e não foi confirmado oficialmente pelo fornecedor |
+| Comportamento no limite (A6) | **sem cobrança automática**; o serviço emite uma notificação. Este registro **não afirma que a coleta para** no limite — afirma que não há cobrança nem upgrade sem ação humana, que é o que A6 exige (*parar* **ou** exigir ação humana antes de qualquer custo) |
+| Vínculo do domínio `developeros.dev` | **Custom Domain** do Worker de produção, com **proxy ativado** (registro C5; o gatilho 5 do ADR-0007 foi tratado como ocorrido no ADR-0010 §2) |
+
+A2 e A6 são **guardrails, não estados obtidos uma vez**: A6 é revalidada a cada troca de fornecedor ou de plano (e o gatilho 3 do ADR-0007 cobre alteração de termos), e habilitar o registro de pageviews individuais viola A2. Nenhum dos itens acima é verificável a partir do repositório; se o dashboard divergir desta tabela, a tabela deve ser corrigida na mesma mudança — não o contrário.
 
 ### 14.7 O que esta seção não decide
 
