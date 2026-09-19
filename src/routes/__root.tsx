@@ -1,6 +1,8 @@
+import { useEffect } from 'react'
 import type { ReactNode } from 'react'
-import { Outlet, createRootRoute, HeadContent, Scripts } from '@tanstack/react-router'
+import { Outlet, createRootRoute, HeadContent, Scripts, useRouter } from '@tanstack/react-router'
 import appCss from '../styles/app.css?url'
+import { GOATCOUNTER_CONFIG_SCRIPT, startPageviewTracking } from '../integrations/analytics'
 import { THEME_BOOTSTRAP_SCRIPT } from '../lib/theme'
 import { FloatingThemeControl } from '../components/theme-control'
 
@@ -31,6 +33,20 @@ function RootComponent() {
 }
 
 function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
+  const router = useRouter()
+
+  // The root knows the router; the analytics boundary knows the vendor;
+  // neither learns the other. This is the whole adapter between them.
+  useEffect(
+    () =>
+      startPageviewTracking(router.state.location.pathname, (onPath) =>
+        router.subscribe('onResolved', ({ toLocation, pathChanged }) => {
+          if (pathChanged) onPath(toLocation.pathname)
+        }),
+      ),
+    [router],
+  )
+
   return (
     // The pre-paint theme bootstrap below mutates this element's `class`
     // before hydration runs, so React's server-rendered class intentionally
@@ -39,6 +55,8 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
       <head>
         <HeadContent />
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP_SCRIPT }} />
+        {/* Analytics (Issue #52): the config must run before the vendor script. */}
+        <script dangerouslySetInnerHTML={{ __html: GOATCOUNTER_CONFIG_SCRIPT }} />
       </head>
       <body className="bg-background font-sans text-foreground">
         <FloatingThemeControl />
