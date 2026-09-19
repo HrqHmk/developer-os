@@ -7,6 +7,8 @@ Aceito
 
 Refina a propriedade **A9** do [ADR-0007](0007-estrategia-de-analytics.md) e registra o tratamento do **gatilho 5** desse mesmo ADR. Nenhuma outra propriedade do ADR-0007 é alterada. O ADR-0007 permanece integralmente como foi aceito; **onde os dois divergirem quanto ao critério de A9, este ADR prevalece** (a redação vigente está em §1).
 
+> **Nota de 2026-09-19 — execução suspensa por decisão do mantenedor.** A execução da Issue #52 que este ADR autorizou foi **suspensa**: o Analytics v1 passou a **DEFERRED / POST-LAUNCH** e **não está implementado em produção** (PR #60 fechado sem merge; branch e histórico preservados). Este ADR formalizou uma **autorização de execução, não uma obrigação de implementar**, e por isso nenhum novo ADR é necessário. A decisão registrada abaixo — a redação vigente de A9 e o tratamento do gatilho 5 — permanece como registro histórico e não é reescrita. Uma eventual retomada depende de nova decisão humana, que deve considerar a necessidade real de medição e as obrigações de privacidade então aplicáveis (a avaliação sobre consentimento, pendente no ADR-0007 (Contras), **não foi concluída**).
+
 ## Contexto
 
 O ADR-0007 fixou A9 — *"Instalação por gatilho. Nada é instalado antes de existirem, simultaneamente, **conteúdo publicado** e **distribuição externa**. Antes disso, a ferramenta mede o próprio autor."* — e o corolário de que, até o gatilho, a ausência de analytics **é a decisão sendo cumprida**, não uma lacuna.
