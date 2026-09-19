@@ -37,6 +37,7 @@ Em caso de conflito, **ADRs aceitos prevalecem** sobre os demais documentos.
 | [0007](docs/adr/0007-estrategia-de-analytics.md) | Estratégia de analytics | Aceito |
 | [0008](docs/adr/0008-estrategia-do-playground-ia.md) | Estratégia do Playground IA | Aceito |
 | [0009](docs/adr/0009-estrategia-de-ci-cd.md) | Estratégia de CI/CD | Aceito |
+| [0010](docs/adr/0010-antecipacao-do-gatilho-do-analytics.md) | Antecipação do gatilho do Analytics — refina A9 do ADR-0007 | Aceito |
 
 ## Como o trabalho entra
 
