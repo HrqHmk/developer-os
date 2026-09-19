@@ -567,3 +567,69 @@ ADR-0009 §3 lista cinco itens como pré-condição do primeiro deploy real (a "
 **O que este registro não faz.** Não afirma que a conta é dedicada, não afirma ausência de recursos alheios, e não afirma que o token foi restringido no dashboard. Se a verificação humana desses itens já ocorreu por fora do repositório — como a Issue #20 presume no Bloco B (item 7, executor "human", anterior ao primeiro deploy real de §13.9.1) —, o resultado dela não havia sido capturado por escrito até este documento, e sua confirmação factual depende do mantenedor, com acesso direto ao dashboard.
 
 **Consequência prática para a Issue #20.** Isto não introduz um novo bloqueio. A própria issue nunca atribuiu a verificação de C7.3 a um agente de IA — o texto já a marca como ação humana fora do diff. O que este documento corrige é a ausência de registro escrito do critério, não a ausência de verificação em si; a verificação continua sendo, como sempre foi, ato humano fora do controle de mudanças.
+
+---
+
+## 14. Analytics
+
+Convenções operacionais derivadas do ADR-0007 (propriedades A1–A9), registradas na Issue #52 (Analytics v1), conforme o §3 do próprio ADR exige no momento da instalação. O gate de instalação (A9) foi refinado pelo ADR-0010; a estratégia, o fornecedor (GoatCounter) e as propriedades não são redefinidos aqui.
+
+### 14.1 Onde o código vive
+
+- **Toda a fronteira do fornecedor** — endpoint, formato do payload, texto do script — está em `src/integrations/analytics.ts` (A4). Nenhum componente ou rota nomeia o fornecedor: eles chamam `trackEvent` com um nome de uma **união fechada** de exatamente dois eventos, `project_external_link_clicked` e `search_result_clicked`. Não há `string` como escape, de modo que "nomes fixos" é erro de tipo, não convenção de review.
+- O documento raiz (`src/routes/__root.tsx`) contém **um único** script inline no `<head>`, exportado pela fronteira como `GOATCOUNTER_BOOTSTRAP_SCRIPT` (o mesmo padrão de `THEME_BOOTSTRAP_SCRIPT`, para que um teste execute exatamente o texto entregue). Ele define `window.goatcounter = { no_onload: true }` e **só então** injeta o `count.js` do fornecedor com `async`.
+- **Por que um script e não dois.** O `count.js` lê `no_onload` no instante em que executa. Se executasse antes da configuração, dispararia a pageview automática e a atribuição posterior substituiria `window.goatcounter`, apagando o `count` que ele acabara de definir. O React 19 **iça** um `<script async src>` renderizado para o topo do `<head>`, antes de qualquer script inline — o que vale também para `head.scripts` do TanStack Router —, então duas tags separadas não garantem a ordem. Um único script inline a garante por construção.
+- O documento raiz também **adapta o roteador à fronteira** e nada além disso: um efeito passa o pathname atual e uma assinatura de `onResolved` filtrada por `pathChanged`. O roteador não conhece o fornecedor e a fronteira não conhece o roteador.
+- **Sem declaração global.** `window.goatcounter` é tipado localmente, no ponto de acesso, dentro da fronteira. Nem `.d.ts` global nem `declare global`: ambos são declarações ambientes visíveis ao projeto inteiro, o oposto de A4.
+- O **código do site** do GoatCounter (`GOATCOUNTER_SITE_CODE`) vive em `src/`. Ele é entregue no HTML de toda página — público por construção —, portanto não é segredo, **D9 do ADR-0006 não é acionada** e o "Build variables e secrets: nenhuma" do §13.7 continua verdadeiro.
+
+### 14.2 Pageviews: uma por mudança de pathname resolvida
+
+`count.js` conta uma vez por carga de documento e ignora navegação pela History API; como o app hidrata em um roteador cliente, o script sozinho registraria apenas a página de entrada de cada visita. Por isso `no_onload` está ativo e a fronteira envia **uma pageview por mudança de pathname resolvida**, primeira carga incluída. Mudança apenas de query ou hash não conta.
+
+Como o `count.js` carrega `async`, o `count` pode não existir quando a primeira rota resolve, e uma pageview enviada antes disso se perderia sem recuperação. A coordenação de inicialização é parte do contrato, não detalhe: pathnames resolvidos antes da prontidão vão para uma fila **sem limite** (nenhum teto, descarte ou sobrescrita — um limite descartaria navegações reais por desenho e seria mudança de contrato), e são enviados em ordem quando o script termina de carregar. "Pendente" e "enviado" são estados distintos, e um pathname só sai da fila depois que **a sua própria** chamada ao fornecedor retorna normalmente. Se o fornecedor nunca carregar, o que estava pendente nunca é enviado — perda aceita sob A5 e A8, sem retry, timer ou transporte alternativo.
+
+### 14.3 Desenvolvimento, previews e produção
+
+- **Desenvolvimento.** `pnpm dev` em `localhost` não emite: o filtro padrão do próprio `count.js` ignora endereços locais. Nenhum código do projeto participa disso.
+- **Produção.** Só o hostname exato **`developeros.dev`** emite. `www.developeros.dev` e o hostname `*.workers.dev` de produção **não** contam — o hostname canônico é `developeros.dev`.
+- **Previews.** Deploys de preview (`*.workers.dev`, §13.9.3) são URLs reais e não locais, que o fornecedor não filtra; o tráfego ali é o do próprio autor, concentrado nas páginas em desenvolvimento, e enviesaria o sinal. A guarda de hostname existe por **correção de contagem** — não é feature flag, não decide *se* analytics existe, apenas *qual host* reporta, e não contorna A9. Os testes cobrem a matriz completa, positiva e negativa: uma guarda testada só na negação poderia passar negando tudo, produção inclusive. Nos hosts negados o `count.js` ainda é baixado, porque o script é injetado incondicionalmente; nada é enviado.
+
+### 14.4 O que nunca é enviado, e o que o fornecedor coleta por conta própria
+
+- **Nunca enviado, por escolha do projeto:** a **query da Busca**, qualquer **entrada digitada pelo usuário** e qualquer **dado de evento em texto livre**. Nomes de evento são fixos e nenhum texto livre é incorporado a nome, path ou título.
+- **Comportamento aceito do fornecedor:** a coleta padrão de **parâmetros de campanha da URL**. Não é coleta da query da Busca e não é tratada como tal.
+- Nenhum transporte próprio é construído para suprimir o comportamento padrão do fornecedor, e **nenhum teste pode afirmar** que inspecionar o objeto passado a `count()` prova a ausência de todos os parâmetros que o fornecedor produz internamente. Os testes provam o que o projeto controla. A garantia é sobre o que este projeto **escolhe** enviar, não uma afirmação absoluta de que nenhuma query string chega ao fornecedor.
+- O evento `project_external_link_clicked` instrumenta o **link externo de projeto** (`repositoryUrl`), não "o único link externo do site": outros links externos existem (Uses, Newsletter) e **não são instrumentados**. O conjunto de eventos é fechado; ampliá-lo é uma decisão própria, e `newsletter_signup` está fora de escopo em caráter permanente (ADR-0007 §5).
+- O link de projeto navega na mesma aba, então parte dos `project_external_link_clicked` se perde na descarga do documento. É coerente com A8 e **não** é motivo para `target="_blank"`, atraso ou `sendBeacon`: isso mudaria a UX para servir a instrumentação.
+
+### 14.5 Testes
+
+`src/integrations/analytics.test.ts` é obrigatório por T3 (camada de mapeamento de `src/integrations/`, §12.4) e roda em jsdom, declarado por arquivo (§12.2). O módulo guarda o estado de coordenação em escopo de módulo — para que a remontagem do Strict Mode não o reinicie —, então cada teste carrega uma instância nova.
+
+`readCoordinationState()` é uma visão somente-leitura exportada **para os testes da própria fronteira**; a aplicação não a chama (A4: nada lê analytics de volta). Ela existe porque "o pathname que falhou continua pendente" e "nada foi marcado como enviado" são propriedades de estado que nenhuma outra saída observável distingue.
+
+Não há teste de rota para `project_external_link_clicked`: o T3 exige teste da camada de mapeamento, não de cada chamada de uma linha. Ele é coberto pelos testes da fronteira, pela leitura direta da linha e pela validação pós-deploy. `search_result_clicked` tem teste de componente, rodado uma vez por ramo de `<Link>` em `SearchResultLink`.
+
+### 14.6 Campos que só existem no dashboard do GoatCounter
+
+Mesma forma e mesma razão do §13.7: parte da configuração não é versionável, e (C5) nenhuma entrada capaz de afetar o que é servido ou coletado pode existir só fora do controle de mudanças sem estar registrada. A tabela é o **contrato que o dashboard deve espelhar**; configurá-lo e verificá-lo é **ação humana, fora do diff**, e um "não" em A6 **interrompe a instalação** em vez de ser contornado.
+
+| Campo | Valor exigido | Indireção para |
+|---|---|---|
+| Conta e site | um site dedicado ao Developer OS | ADR-0007 §3 |
+| Código do site | o valor de `GOATCOUNTER_SITE_CODE` em `src/integrations/analytics.ts` | público por construção; não é segredo, D9 não acionada |
+| Coleta de pageviews individuais | **desligada** — o fornecedor a desliga por padrão, mas o padrão é **verificado, não presumido** | A2 |
+| Painel | **privado**; sem página pública de estatísticas | ADR-0007 §5 |
+| Método de pagamento e limites | **nenhum método de pagamento anexado**; atingir qualquer limite gratuito **interrompe a coleta**, não faz upgrade nem cobra | A6, revalidada na instalação e a cada troca de fornecedor ou plano |
+| Vínculo do domínio `developeros.dev` na Cloudflare | forma do vínculo (Custom Domain ou Route) e estado do proxy — **a registrar** | C5 (§13.7); ADR-0010 §2 |
+| Build variables e secrets | **nenhuma** (inalterado) | §13.7 |
+
+**Registro da configuração.** Ainda não executada: a criação da conta, a verificação de A2 e A6 e a leitura do vínculo do domínio são ações humanas do Plano v4 §11 e serão registradas aqui, com data e sem presumir o resultado, antes de o PR de implementação ser integrado.
+
+### 14.7 O que esta seção não decide
+
+- **A avaliação humana sobre consentimento (LGPD/GDPR)** — registrada como pendente no ADR-0007 (Contras) e mantida pelo ADR-0010 §3 — **não é resolvida aqui**, e nada nesta seção presume que o uso do GoatCounter dispensa consentimento ou qualquer outra obrigação de privacidade. Como a publicação é consequência do merge (ADR-0006) e não há feature flag, o merge do PR de implementação é o que ativa a coleta em `developeros.dev`; a avaliação precisa estar concluída antes dele.
+- A distribuição externa **não foi registrada como ocorrida** (ADR-0010 §1). Enquanto ela não começa, os acessos ao domínio de produção são majoritariamente os do próprio autor e **não devem ser lidos como audiência**, sob A8.
+- Os números são **direcionais, não exatos** (A8): a medição client-side subconta na ordem de um terço, e provavelmente mais para este público.
+

@@ -109,9 +109,9 @@ developer-os/
 
 Testes unitários e de integração ficam **co-locados** com o código que verificam, dentro de `src/`, e não em diretório próprio. `tests/` é reservado ao E2E, que não tem código-fonte correspondente para acompanhar. Ver ADR-0005 e `conventions.md` §12.
 
-Esta é a estrutura-alvo: diretórios nascem quando há código que os justifique (`architecture.md` §11), não antecipadamente. `src/routes/`, `src/content/` (ADR-0003, desde o Blog), `src/lib/` e `src/components/` já existem. `src/components/` foi introduzido por `theme-control.tsx` (Dark Mode, Issue #44) e hoje também é usado por `search-panel.tsx` (Search v1, Issue #48), `newsletter-signup.tsx` (Newsletter v1, Issue #53) e `home-header.tsx` (Homepage Visual Refresh v1, Issue #57 — header exclusivo de `/`, não chrome global) — o critério é responsabilidade clara ou reutilização real (`conventions.md` §7), não antecipação. `src/integrations/` ainda não — aparece quando a necessidade correspondente (primeira integração externa) existir.
+Esta é a estrutura-alvo: diretórios nascem quando há código que os justifique (`architecture.md` §11), não antecipadamente. `src/routes/`, `src/content/` (ADR-0003, desde o Blog), `src/lib/` e `src/components/` já existem. `src/components/` foi introduzido por `theme-control.tsx` (Dark Mode, Issue #44) e hoje também é usado por `search-panel.tsx` (Search v1, Issue #48), `newsletter-signup.tsx` (Newsletter v1, Issue #53) e `home-header.tsx` (Homepage Visual Refresh v1, Issue #57 — header exclusivo de `/`, não chrome global) — o critério é responsabilidade clara ou reutilização real (`conventions.md` §7), não antecipação. `src/integrations/` passou a existir com `analytics.ts` (Analytics v1, Issue #52) — a primeira integração externa com o que mapear: eventos em vocabulário do projeto traduzidos para o formato do fornecedor, mais a coordenação de inicialização que esse fornecedor exige.
 
-**Por que a Newsletter não criou `src/integrations/`:** o modelo de integração escolhido na Issue #53 é um `<form>` HTML nativo que o browser submete direto ao endpoint público do provider, com a resposta confinada a um iframe oculto. Não existe adaptador traduzindo evento de domínio em payload de fornecedor, nem chamada de rede feita pelo projeto, nem credencial — não há camada de mapeamento para isolar. Criar `src/integrations/newsletter.ts` produziria um arquivo sem responsabilidade própria, contra `architecture.md` §11. O gatilho de `src/integrations/` continua sendo a primeira integração que de fato tenha o que mapear.
+**Por que a Newsletter não criou `src/integrations/`:** o modelo de integração escolhido na Issue #53 é um `<form>` HTML nativo que o browser submete direto ao endpoint público do provider, com a resposta confinada a um iframe oculto. Não existe adaptador traduzindo evento de domínio em payload de fornecedor, nem chamada de rede feita pelo projeto, nem credencial — não há camada de mapeamento para isolar. Criar `src/integrations/newsletter.ts` produziria um arquivo sem responsabilidade própria, contra `architecture.md` §11. O gatilho de `src/integrations/` é a primeira integração que de fato tenha o que mapear — e foi o Analytics (Issue #52) que o cumpriu, sem que a decisão acima mude: a Newsletter continua sem camada própria, porque continua sem payload a mapear.
 
 ---
 
@@ -139,13 +139,14 @@ Possíveis integrações futuras:
 
 - GitHub;
 - LinkedIn;
-- analytics;
 - provedores de IA;
 - outras APIs externas.
 
 Integrações devem permanecer isoladas da lógica principal da aplicação.
 
 **Newsletter (Issue #53)** deixou de ser integração futura: está implementada em `src/components/newsletter-signup.tsx`, com Buttondown como provider. O isolamento aqui é estrutural, não convencional — o browser submete o formulário direto ao provider e a resposta fica contida em um iframe oculto, de modo que indisponibilidade do fornecedor não alcança nenhuma outra parte da aplicação. Sem backend, sem server function, sem credencial e sem base de assinantes própria; a confirmação da inscrição é o double opt-in do provider.
+
+**Analytics (Issue #52)** deixou de ser integração futura: está implementada em `src/integrations/analytics.ts`, com GoatCounter como fornecedor (ADR-0007). Tudo o que conhece o fornecedor — endpoint, formato do payload, texto do script — vive nesse único arquivo (A4); componentes e rotas só emitem eventos em vocabulário do projeto (uma união fechada de nomes) e o documento raiz apenas adapta o roteador à fronteira. Os dados fluem apenas da aplicação para a fronteira, e remover o arquivo, ou torná-lo no-op, não altera o comportamento da aplicação. Sem backend, sem server function e sem credencial: o código do site é público por construção.
 
 ---
 
