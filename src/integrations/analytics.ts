@@ -42,12 +42,44 @@ type GoatCounterApi = {
 }
 
 /**
- * Inline config, executed before the vendor script. `no_onload` suppresses the
- * vendor's automatic pageview: `count.js` counts once per document load and
- * ignores History-API navigation, so this app sends one pageview per resolved
- * path change itself (`startPageviewTracking`), first load included.
+ * The vendor site code. It ships in the HTML of every page, so it is public by
+ * construction — not a secret, and therefore not a build variable
+ * (ADR-0006 D9 is not triggered).
  */
-export const GOATCOUNTER_CONFIG_SCRIPT = 'window.goatcounter = { no_onload: true }'
+const GOATCOUNTER_SITE_CODE = 'hrqhm'
+
+const GOATCOUNTER_ENDPOINT = `https://${GOATCOUNTER_SITE_CODE}.goatcounter.com/count`
+const GOATCOUNTER_SCRIPT_SRC = '//gc.zgo.at/count.js'
+
+/**
+ * Inline script for the document `<head>`: sets the vendor config, and only
+ * then adds the vendor script — `async`, so it never blocks rendering.
+ *
+ * Config and vendor script are one script on purpose. `count.js` reads
+ * `no_onload` the moment it runs; if it ran first it would fire its own
+ * automatic pageview, and the config assignment that followed would replace
+ * `window.goatcounter` and delete the `count` it had just defined. React 19
+ * hoists a rendered `<script async src>` to the top of the `<head>`, ahead of
+ * any inline script, so two separate tags cannot guarantee the order.
+ *
+ * `no_onload` suppresses the vendor's automatic pageview: `count.js` counts
+ * once per document load and ignores History-API navigation, so this app sends
+ * one pageview per resolved path change itself (`startPageviewTracking`), first
+ * load included.
+ *
+ * Exported as a string, like `THEME_BOOTSTRAP_SCRIPT` in `src/lib/theme.ts`,
+ * so a test can execute exactly what ships.
+ */
+export const GOATCOUNTER_BOOTSTRAP_SCRIPT = `
+(function () {
+  window.goatcounter = { no_onload: true };
+  var script = document.createElement('script');
+  script.async = true;
+  script.setAttribute('data-goatcounter', '${GOATCOUNTER_ENDPOINT}');
+  script.src = '${GOATCOUNTER_SCRIPT_SRC}';
+  document.head.appendChild(script);
+})();
+`.trim()
 
 // ---------------------------------------------------------------------------
 // Startup coordination

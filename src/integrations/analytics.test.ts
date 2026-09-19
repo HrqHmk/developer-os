@@ -11,6 +11,13 @@ async function loadBoundary(): Promise<typeof import('./analytics.ts')> {
   return import('./analytics.ts')
 }
 
+/**
+ * Taken at load, before any test runs: the bootstrap script executes in several
+ * tests, and a global leaked by the first would already be part of a snapshot
+ * taken inside a later one.
+ */
+const GLOBALS_BEFORE_ANY_TEST = new Set(Object.keys(window))
+
 type CountVars = { path: string; title?: string; event?: boolean }
 type CountMock = ReturnType<typeof vi.fn<(vars: CountVars) => void>>
 
@@ -79,6 +86,55 @@ afterEach(() => {
   delete (window as Window & { goatcounter?: unknown }).goatcounter
   document.head.innerHTML = ''
   document.body.innerHTML = ''
+})
+
+describe('bootstrap script', () => {
+  // Executes the exact string the root document ships, as `theme.test.ts` does
+  // for the theme bootstrap. Indirect `eval` rather than `new Function`: an
+  // inline `<script>` runs at global scope, and only there does a stray
+  // top-level `var` become an observable global.
+  async function runBootstrapScript() {
+    const { GOATCOUNTER_BOOTSTRAP_SCRIPT } = await loadBoundary()
+    ;(0, eval)(GOATCOUNTER_BOOTSTRAP_SCRIPT)
+  }
+
+  it('sets no_onload before the vendor script enters the document', async () => {
+    // The order is the point: `count.js` reads `no_onload` the moment it runs,
+    // and a config assigned afterwards would replace what it had defined.
+    let configWhenAppended: unknown
+    const appendChild = document.head.appendChild.bind(document.head)
+    vi.spyOn(document.head, 'appendChild').mockImplementation((node) => {
+      configWhenAppended = (window as Window & { goatcounter?: unknown }).goatcounter
+      return appendChild(node)
+    })
+
+    await runBootstrapScript()
+
+    expect(configWhenAppended).toEqual({ no_onload: true })
+  })
+
+  it('adds exactly one async vendor script carrying its endpoint', async () => {
+    await runBootstrapScript()
+
+    const scripts = document.head.querySelectorAll('script[data-goatcounter]')
+    expect(scripts).toHaveLength(1)
+    const script = scripts[0] as HTMLScriptElement
+    expect(script.async).toBe(true)
+    expect(script.getAttribute('src')).toBe('//gc.zgo.at/count.js')
+    expect(script.getAttribute('data-goatcounter')).toMatch(
+      /^https:\/\/[a-z0-9-]+\.goatcounter\.com\/count$/,
+    )
+  })
+
+  it('leaves no global other than the vendor config behind', async () => {
+    await runBootstrapScript()
+    // `location` is this file's own host stub (`beforeEach`), not the script's.
+    const added = Object.keys(window).filter(
+      (key) => key !== 'location' && !GLOBALS_BEFORE_ANY_TEST.has(key),
+    )
+
+    expect(added).toEqual(['goatcounter'])
+  })
 })
 
 describe('payloads', () => {

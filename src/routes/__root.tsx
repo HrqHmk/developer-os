@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import type { ReactNode } from 'react'
 import { Outlet, createRootRoute, HeadContent, Scripts, useRouter } from '@tanstack/react-router'
 import appCss from '../styles/app.css?url'
-import { GOATCOUNTER_CONFIG_SCRIPT, startPageviewTracking } from '../integrations/analytics'
+import { GOATCOUNTER_BOOTSTRAP_SCRIPT, startPageviewTracking } from '../integrations/analytics'
 import { THEME_BOOTSTRAP_SCRIPT } from '../lib/theme'
 import { FloatingThemeControl } from '../components/theme-control'
 
@@ -55,8 +55,8 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
       <head>
         <HeadContent />
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP_SCRIPT }} />
-        {/* Analytics (Issue #52): the config must run before the vendor script. */}
-        <script dangerouslySetInnerHTML={{ __html: GOATCOUNTER_CONFIG_SCRIPT }} />
+        {/* Analytics (Issue #52): config, then the async vendor script — one script, so the order is guaranteed. */}
+        <script dangerouslySetInnerHTML={{ __html: GOATCOUNTER_BOOTSTRAP_SCRIPT }} />
       </head>
       <body className="bg-background font-sans text-foreground">
         <FloatingThemeControl />
