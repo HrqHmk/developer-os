@@ -1,5 +1,6 @@
 import { Link, createFileRoute, notFound } from '@tanstack/react-router'
 import { projects } from 'virtual:projects'
+import { trackEvent } from '../integrations/analytics.ts'
 
 export const Route = createFileRoute('/projects/$slug')({
   loader: ({ params }) => {
@@ -29,6 +30,7 @@ function ProjectDetail() {
         {project.repositoryUrl && (
           <a
             href={project.repositoryUrl}
+            onClick={() => trackEvent('project_external_link_clicked')}
             className="block text-sm text-muted-foreground hover:text-foreground"
           >
             Repository →

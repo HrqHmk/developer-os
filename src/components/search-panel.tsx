@@ -1,6 +1,7 @@
 import { useId, useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import type { SearchDocument } from '../content/pipeline/search-index.ts'
+import { trackEvent } from '../integrations/analytics.ts'
 import { searchDocuments } from '../lib/search.ts'
 
 const TYPE_LABELS: Record<SearchDocument['type'], string> = {
@@ -87,13 +88,24 @@ function SearchResultLink({
   children,
 }: Readonly<{ result: SearchDocument; children: React.ReactNode }>) {
   const className = 'block space-y-2'
+  const handleClick = () => trackEvent('search_result_clicked')
 
   return result.type === 'article' ? (
-    <Link to="/blog/$slug" params={{ slug: result.slug }} className={className}>
+    <Link
+      to="/blog/$slug"
+      params={{ slug: result.slug }}
+      className={className}
+      onClick={handleClick}
+    >
       {children}
     </Link>
   ) : (
-    <Link to="/projects/$slug" params={{ slug: result.slug }} className={className}>
+    <Link
+      to="/projects/$slug"
+      params={{ slug: result.slug }}
+      className={className}
+      onClick={handleClick}
+    >
       {children}
     </Link>
   )

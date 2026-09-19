@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { afterEach, beforeAll, describe, expect, it } from 'vitest'
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import {
@@ -11,7 +11,12 @@ import {
   createRouter,
 } from '@tanstack/react-router'
 import type { SearchDocument } from '../content/pipeline/search-index'
+import { trackEvent } from '../integrations/analytics'
 import { SearchPanel } from './search-panel'
+
+// The boundary's own behaviour is covered in `analytics.test.ts`; here it is
+// only the seam the component calls.
+vi.mock('../integrations/analytics', () => ({ trackEvent: vi.fn() }))
 
 /**
  * An article and a project that both match the same query, so one search
@@ -81,6 +86,10 @@ beforeAll(() => {
 
 // With `globals: false`, Testing Library does not register its own cleanup.
 afterEach(cleanup)
+
+beforeEach(() => {
+  vi.mocked(trackEvent).mockClear()
+})
 
 describe('SearchPanel', () => {
   it('labels the search input accessibly', async () => {
@@ -153,5 +162,22 @@ describe('SearchPanel', () => {
 
     expect(articleHref).toMatch(/^\/blog\//)
     expect(projectHref).toMatch(/^\/projects\//)
+  })
+
+  it.each([
+    ['an article', 'Why Developer OS'],
+    ['a project', 'Developer OS Platform'],
+  ])('reports search_result_clicked once when %s result is clicked', async (_kind, title) => {
+    // Both kinds are exercised because `SearchResultLink` renders them through
+    // two separate `<Link>` branches: covering one would leave the other's
+    // handler unchecked. Only the result click counts — typing a query is not
+    // an event (`search_performed` is deliberately out of scope).
+    const { user } = renderSearchPanel()
+    await user.type(await screen.findByRole('searchbox'), 'developer')
+    expect(trackEvent).not.toHaveBeenCalled()
+
+    await user.click(within(resultFor(title)).getByRole('link'))
+
+    expect(trackEvent).toHaveBeenCalledExactlyOnceWith('search_result_clicked')
   })
 })
