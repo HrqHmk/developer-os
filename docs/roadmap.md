@@ -8,7 +8,7 @@ As fases são ordenadas por dependência e por risco.
 
 O Playground ocupava originalmente a Fase 3. Ele foi movido para o fim e **o número 3 não foi reaproveitado**: as demais fases mantêm a numeração original para que as referências dos ADRs aceitos permaneçam válidas, já que ADRs aceitos não são reescritos (`conventions.md` §10). As únicas referências que envelheceram são as que apontam o Playground como Fase 3 — em ADR-0001, ADR-0005 e ADR-0007 —, e elas envelheceram porque foi exatamente isso que mudou.
 
-**Homepage Visual Refresh v1 foi integrado (PR #58).** A Fase 4 segue com Analytics em aberto.
+**Homepage Visual Refresh v1 foi integrado (PR #58).** Analytics v1 foi **adiado para evolução pós-launch** por decisão do mantenedor (Issue #52) e **não é requisito do lançamento do Developer OS v1**; não está implementado em produção.
 
 **Futuro** não é uma fase: é backlog sem ordem definida nem compromisso de execução, e não está sequenciado depois da Fase 6.
 
@@ -42,7 +42,7 @@ O Playground ocupava originalmente a Fase 3. Ele foi movido para o fim e **o nú
 - [x] Dark Mode
 - [x] Newsletter
 - [x] RSS
-- [ ] Analytics
+- [ ] Analytics — **adiado** (DEFERRED / POST-LAUNCH; não implementado em produção; Issue #52). Não é abandono nem troca de fornecedor: só volta a ser trabalhado por decisão humana explícita
 
 ---
 
