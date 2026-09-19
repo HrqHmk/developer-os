@@ -76,7 +76,7 @@ A via (b2) é **por execução, não licença geral**: cada uso precisa do seu p
 
 ### Prós
 
-- **Nenhum acesso do lançamento é perdido.** A coleta existe quando a divulgação começa, e o `referrer` de abertura fica registrado.
+- **A coleta já existe quando a divulgação começa.** Os primeiros acessos deixam de escapar por falta de instrumentação, e o `referrer` de abertura pode ser registrado. Isso **não elimina as limitações de A8**: a medição client-side subconta na ordem de um terço, e provavelmente mais para este público, de modo que parte dos acessos do lançamento não será contada mesmo com a coleta ativa. Os números seguem direcionais, não exatos.
 - **A9 mantém função de gate.** A via (b2) exige registro escrito, humano, datado e por execução — não é dispensa do critério.
 - **Contrato consistente sem reabrir decisão técnica.** O plano aprovado é executado como está.
 - **Nenhum ADR aceito é reescrito.** O ADR-0007 permanece íntegro; este ADR o refina de forma rastreável.
