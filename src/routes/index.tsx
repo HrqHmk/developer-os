@@ -4,8 +4,10 @@ import { articles } from 'virtual:articles'
 import { HomeHeader } from '../components/home-header'
 import { learningSections } from '../content/data/learning.ts'
 import { formatPublishedAt } from '../lib/format-published-at.ts'
+import { homeHead } from '../lib/site-metadata.ts'
 
 export const Route = createFileRoute('/')({
+  head: () => homeHead,
   component: Home,
 })
 
