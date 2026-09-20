@@ -568,3 +568,66 @@ ADR-0009 §3 lista cinco itens como pré-condição do primeiro deploy real (a "
 **O que este registro não faz.** Não afirma que a conta é dedicada, não afirma ausência de recursos alheios, e não afirma que o token foi restringido no dashboard. Se a verificação humana desses itens já ocorreu por fora do repositório — como a Issue #20 presume no Bloco B (item 7, executor "human", anterior ao primeiro deploy real de §13.9.1) —, o resultado dela não havia sido capturado por escrito até este documento, e sua confirmação factual depende do mantenedor, com acesso direto ao dashboard.
 
 **Consequência prática para a Issue #20.** Isto não introduz um novo bloqueio. A própria issue nunca atribuiu a verificação de C7.3 a um agente de IA — o texto já a marca como ação humana fora do diff. O que este documento corrige é a ausência de registro escrito do critério, não a ausência de verificação em si; a verificação continua sendo, como sempre foi, ato humano fora do controle de mudanças.
+
+### 13.11 Host canônico: `www` e HTTPS
+
+Registra a configuração **efetivamente aplicada** na Cloudflare para o host canônico e o comportamento HTTP **observado** em produção — não o que era esperado. Nasce da Issue #62 (Launch Readiness v1) e é a contrapartida documental de uma configuração que vive **fora do repositório**: foi aplicada por Henrique no dashboard, como ação humana fora do controle de mudanças (§13.10). A evidência completa, item a item e com a fonte de cada observação, está no [Operational Validation Record](https://github.com/HrqHmk/developer-os/issues/62#issuecomment-5750359108).
+
+Por que aqui e não na tabela de §13.7: aquela tabela cobre campos de **build**, e sua coluna "Indireção para" pressupõe uma entrada que determina o artefato; um redirecionamento não determina o artefato. Também não há lógica de host ou de redirecionamento em `src/` — o acoplamento com o fornecedor fica na fronteira de configuração (ADR-0006 D6).
+
+#### 13.11.1 Redirecionamento `www` → apex
+
+**Decisão de produto (Issue #62):** `https://developeros.dev` é o único host canônico; `www.developeros.dev` redireciona a ele de forma **permanente**.
+
+**Configuração aplicada.** Valores **relatados por Henrique** a partir do dashboard: não são verificáveis de fora — só o seu efeito é (tabela abaixo).
+
+| Peça | Valor |
+|---|---|
+| Registro DNS | tipo `A`, nome `www`, valor `192.0.2.1`, proxy **ativado** |
+| Redirect Rule — condição | hostname igual a `www.developeros.dev` |
+| Redirect Rule — tipo | Dynamic |
+| Redirect Rule — destino | `concat("https://developeros.dev", http.request.uri.path)` |
+| Redirect Rule — status | `301` (permanente) |
+| Redirect Rule — query string | *preserve query string*: **ativado** |
+
+O **caminho** é preservado pela própria expressão de destino; a **query string**, pela opção da regra. `192.0.2.1` pertence ao bloco reservado para documentação (RFC 5737); o que o cliente recebe, com o proxy ativado, é o redirecionamento produzido pela regra.
+
+Para implementar o redirecionamento foram criados **apenas** o registro DNS e a Redirect Rule (relato de Henrique): nenhum segundo Worker, site ou serviço.
+
+**O mecanismo que não é este.** Vincular `www` como segundo Custom Domain do mesmo Worker **serviria** o site nos dois hosts — dois hosts canônicos, o oposto da decisão. O handshake TLS em `www` também precisa concluir antes de qualquer redirecionamento: uma regra que só funcionasse em HTTP puro não atenderia a decisão.
+
+**Comportamento observado** em produção, em 2026-09-20:
+
+| Requisição | Resultado |
+|---|---|
+| `https://www.developeros.dev/` | `301` → `https://developeros.dev/` |
+| `https://www.developeros.dev/blog?ref=linkedin` | `301` → `https://developeros.dev/blog?ref=linkedin` (caminho e query preservados) |
+| `http://www.developeros.dev/` | `301` → `https://developeros.dev/` — **um hop**, direto ao HTTPS canônico |
+| `http://www.developeros.dev/blog?ref=linkedin` | `301` → `https://developeros.dev/blog?ref=linkedin` |
+| `https://www.developeros.dev/about/` | `301` → `https://developeros.dev/about/` → `307` → `/about` — dois hops, sem loop (o `307` é o de §13.8) |
+| `https://developeros.dev/` | `200`, direto, sem redirect |
+
+- O handshake TLS em `www` conclui com certificado válido para o host — o certificado cobre `developeros.dev` e `*.developeros.dev`.
+- Nenhum loop em nenhum caminho testado.
+- Normalizações observadas: a query vazia (`/blog?`) e a barra dupla (`//blog`) chegam ao destino como `/blog`.
+
+**Estado anterior.** Antes da configuração não existia registro DNS para `www` na zona `developeros.dev`, e a Cloudflare indicava o endereço como inacessível (capturas do dashboard fornecidas por Henrique). **Nenhuma medição de TLS ou de HTTP foi feita antes da mudança** — o registro anterior é apenas de DNS.
+
+#### 13.11.2 Always Use HTTPS (decisão operacional adicional)
+
+Registrado **separadamente** de §13.11.1: é outra configuração, com outro propósito, e não faz parte da Redirect Rule de `www`.
+
+- **O que é.** Configuração de zona da Cloudflare que redireciona HTTP para HTTPS. Foi ativada por Henrique durante o Launch Readiness (Issue #62); o horário da ativação não foi registrado — a mudança de comportamento foi observada entre duas verificações no mesmo dia. O estado da opção é **relato de Henrique**; não foi lido no dashboard por agente.
+- **Por que está registrada como decisão.** Não fazia parte do contrato original: o *Out of Scope* da Issue #62 excluía "redirect rules beyond `www` → apex". Henrique e Friday aprovaram registrá-la como **decisão operacional adicional, limitada a padronizar o acesso por HTTPS**. Não amplia o escopo do lançamento nem substitui a Redirect Rule.
+- **Efeito observado.** Antes da ativação, `http://developeros.dev/` e `http://developeros.dev/blog` respondiam `200` em HTTP puro, sem redirecionar. Depois, respondem `301` para o mesmo caminho e query em `https://developeros.dev/` (seguido de `200`). O apex em HTTPS continua respondendo `200` direto.
+- **Interação com §13.11.1.** Nenhuma interferência na política de host canônico: `http://www…` continua chegando ao HTTPS canônico em **um** hop, sem passar por `https://www…`, e o redirecionamento `https://www…` segue funcional, com caminho e query preservados.
+
+#### 13.11.3 Não observado
+
+Como em §13.9.6 e §13.10: o que não foi observado é registrado como tal, e não como resolvido pela ausência de um caso de teste. Os itens `NOT OBSERVED` do Operational Validation Record permanecem como publicados lá. Os que dizem respeito a esta configuração:
+
+- **TLS e status HTTP de `www` antes da mudança:** nunca medidos.
+- **Forma do vínculo do apex** (Custom Domain ou Route): não identificada. Henrique confirmou no dashboard que `developeros.dev` permanece vinculado ao Worker de produção `developer-os`; a modalidade não foi registrada, e `wrangler.jsonc` não declara `routes` (limite já registrado no ADR-0010 §2). Não é presumida.
+- **Estado do proxy do apex:** não confirmado no dashboard. Há apenas sinais indiretos por HTTP (`server: cloudflare`, `cf-ray`, endereços de borda da Cloudflare), consistentes com tráfego pela borda, que não substituem a confirmação da configuração.
+
+**O que este registro não faz.** Não afirma que os valores de §13.11.1 e o estado de §13.11.2 foram lidos no dashboard por agente — são relatos de Henrique cujo efeito foi verificado por HTTP. Não fecha a Issue #62: o fechamento depende do smoke check final previsto no Implementation Plan.
