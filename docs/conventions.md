@@ -594,7 +594,7 @@ O **caminho** é preservado pela própria expressão de destino; a **query strin
 
 Para implementar o redirecionamento foram criados **apenas** o registro DNS e a Redirect Rule (relato de Henrique): nenhum segundo Worker, site ou serviço.
 
-**O mecanismo que não é este.** Vincular `www` como segundo Custom Domain do mesmo Worker **serviria** o site nos dois hosts — dois hosts canônicos, o oposto da decisão. O handshake TLS em `www` também precisa concluir antes de qualquer redirecionamento: uma regra que só funcionasse em HTTP puro não atenderia a decisão.
+**O mecanismo que não é este.** Vincular `www` como segundo Custom Domain do mesmo Worker **serviria** o site nos dois hosts sem garantir o redirecionamento de `www` para o host canônico, contrariando a decisão da Issue #62. O handshake TLS em `www` também precisa concluir antes de qualquer redirecionamento: uma regra que só funcionasse em HTTP puro não atenderia a decisão.
 
 **Comportamento observado** em produção, em 2026-09-20:
 
