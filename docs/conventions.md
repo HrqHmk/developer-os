@@ -403,7 +403,7 @@ Convenções derivadas do ADR-0009. As propriedades duráveis (C1–C9) estão n
 - Arquivo único: **`.github/workflows/ci.yml`**, workflow **`CI`**.
 - Três jobs — **`typecheck`**, **`build`** e **`test`** — cada um produzindo um check run de mesmo nome. O job `test` executa `pnpm test` (`vitest run`).
 - **São jobs separados, e não steps de um mesmo job.** C2 exige verificação granular e individualmente reexecutável, e o ADR-0009 §3 recusa a alternativa nativa precisamente por "colapsa typecheck, teste e falha de infraestrutura num único sinal". A duplicação dos steps de preparação é o preço, e é deliberada.
-- O nome do check run é o `name` do job, **fixado explicitamente**. A proteção de branch do GitHub exige **contexts por nome** (`typecheck`, `build`) — não uma execução específica ligada ao evento que a disparou. Renomear um job não quebra a proteção em silêncio: se o context exigido deixar de ser reportado, o comportamento é *fail-closed* — o GitHub continua aguardando aquele context e o merge fica bloqueado, visivelmente, até o nome ser corrigido ou o context trocado na proteção.
+- O nome do check run é o `name` do job, **fixado explicitamente**. A proteção de branch do GitHub exige **contexts por nome** (`typecheck`, `build`, `test`) — não uma execução específica ligada ao evento que a disparou. Renomear um job não quebra a proteção em silêncio: se o context exigido deixar de ser reportado, o comportamento é *fail-closed* — o GitHub continua aguardando aquele context e o merge fica bloqueado, visivelmente, até o nome ser corrigido ou o context trocado na proteção.
 
 ### 13.2 De qual garantia cada verificação deriva (C1)
 
@@ -417,7 +417,7 @@ O conjunto **não é fechado**. C1 define como uma verificação entra, não qua
 
 ### 13.3 Gatilhos, e por que os dois não têm o mesmo papel
 
-A proteção de branch do GitHub exige **contexts por nome** — `typecheck`, `build` — e não uma execução específica ligada ao evento que a disparou. Quando os dois forem promovidos a obrigatórios (Bloco B), o merge espera que esses contexts estejam satisfeitos **no commit sendo mergeado** — o head do Pull Request (ou a referência de merge). É a execução disparada por `pull_request` que reporta nesse commit, e é ela quem satisfaz o requisito.
+A proteção de branch do GitHub exige **contexts por nome** — `typecheck`, `build` e `test` — e não uma execução específica ligada ao evento que a disparou. Com os três configurados como obrigatórios na proteção de `main`, o merge espera que esses contexts estejam satisfeitos **no commit sendo mergeado** — o head do Pull Request (ou a referência de merge). É a execução disparada por `pull_request` que reporta nesse commit, e é ela quem satisfaz o requisito.
 
 | Gatilho | Papel |
 |---|---|
