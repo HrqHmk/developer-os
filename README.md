@@ -6,7 +6,7 @@ Mais do que um portfólio, é um ecossistema AI-first onde documento decisões a
 
 ## Estado atual
 
-Home, About, Blog e Projects já estão no ar — Blog com o primeiro artigo real publicado, Projects com o próprio Developer OS como primeiro projeto real —, com estilização e tokens do design system (Tailwind CSS + Geist) em uso e conteúdo descoberto, validado e processado por um pipeline build-only versionado (ADR-0003), sem leitura nem processamento de conteúdo em runtime. O artefato é publicado no Cloudflare Workers (ADR-0006). CI/CD e automação completa do fluxo de deploy permanecem pendência própria (Issue #20).
+Home, About, Blog e Projects já estão no ar — Blog com o primeiro artigo real publicado, Projects com o próprio Developer OS como primeiro projeto real —, com estilização e tokens do design system (Tailwind CSS + Geist) em uso e conteúdo descoberto, validado e processado por um pipeline build-only versionado (ADR-0003), sem leitura nem processamento de conteúdo em runtime. O artefato é publicado no Cloudflare Workers (ADR-0006). A verificação roda no CI (GitHub Actions: `typecheck`, `build` e `test`) e o deploy de produção é feito pelo Workers Builds a partir da `main` (ADR-0009).
 
 A base documental continua governando o que vier a ser construído.
 
