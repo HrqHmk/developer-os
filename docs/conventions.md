@@ -389,7 +389,7 @@ Sem enforcement automatizado nesta fase, coerente com o precedente de ADR-0002 (
 ### 12.7 Execução
 
 - A suíte é executável por **um comando único**, determinística e **sem acesso à rede** (T6, T11).
-- Sua execução integra os critérios de merge de G7.3 conforme a verificação automatizada se torne disponível (T11). Enquanto não houver CI, a execução depende de disciplina local — limitação registrada nos contras do ADR-0005.
+- Sua execução integra os critérios de merge de G7.3 (T11) por meio do check **`test`** do CI (§13.1), que roda `vitest run` em todo Pull Request e em `push` em `main`. A execução deixa de depender de disciplina local — a limitação registrada nos contras do ADR-0005 deixa de valer a partir da introdução desse check.
 - **Sem threshold de cobertura**, global ou por diretório (T3).
 
 ---
@@ -401,7 +401,7 @@ Convenções derivadas do ADR-0009. As propriedades duráveis (C1–C9) estão n
 ### 13.1 Onde a verificação vive
 
 - Arquivo único: **`.github/workflows/ci.yml`**, workflow **`CI`**.
-- Dois jobs — **`typecheck`** e **`build`** — cada um produzindo um check run de mesmo nome.
+- Três jobs — **`typecheck`**, **`build`** e **`test`** — cada um produzindo um check run de mesmo nome. O job `test` executa `pnpm test` (`vitest run`).
 - **São jobs separados, e não steps de um mesmo job.** C2 exige verificação granular e individualmente reexecutável, e o ADR-0009 §3 recusa a alternativa nativa precisamente por "colapsa typecheck, teste e falha de infraestrutura num único sinal". A duplicação dos steps de preparação é o preço, e é deliberada.
 - O nome do check run é o `name` do job, **fixado explicitamente**. A proteção de branch do GitHub exige **contexts por nome** (`typecheck`, `build`) — não uma execução específica ligada ao evento que a disparou. Renomear um job não quebra a proteção em silêncio: se o context exigido deixar de ser reportado, o comportamento é *fail-closed* — o GitHub continua aguardando aquele context e o merge fica bloqueado, visivelmente, até o nome ser corrigido ou o context trocado na proteção.
 
@@ -411,6 +411,7 @@ Convenções derivadas do ADR-0009. As propriedades duráveis (C1–C9) estão n
 |---|---|
 | `typecheck` (`tsc --noEmit`) | ADR-0001 (TypeScript como stack) + ADR-0005 T1 (tipagem cobre estrutura e contrato de dados). Nomeada em ADR-0009 §4. |
 | `build` (`vite build`) | ADR-0003 P2/P4 (conteúdo descoberto, validado e processado em build) + ADR-0005 T1. Nomeada em ADR-0009 §4. |
+| `test` (`vitest run`) | ADR-0005 T11 (a suíte integra os critérios de merge de G7.3) + ADR-0009 §4 (a suíte entra no conjunto com o primeiro código de `src/content/pipeline/`). |
 
 O conjunto **não é fechado**. C1 define como uma verificação entra, não qual é o conjunto para sempre: uma verificação nova entra por esta tabela, com sua origem em uma linha. Sem origem derivável, não entra — é por isso que não há lint (ADR-0009 §4).
 
