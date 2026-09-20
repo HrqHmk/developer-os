@@ -15,6 +15,7 @@ export const Route = createRootRoute({
       { title: 'Developer OS' },
     ],
     links: [
+      { rel: 'icon', href: '/favicon.ico', sizes: '16x16 32x32 48x48' },
       { rel: 'stylesheet', href: appCss },
       { rel: 'alternate', type: 'application/rss+xml', href: '/rss.xml' },
     ],
