@@ -452,7 +452,7 @@ Cada job executa, nesta ordem: checkout → Node → pnpm → instalação conge
 O caminho de instalação do pnpm depende do **Corepack**, distribuído junto com o Node **até a linha 24** e **removido da distribuição a partir da 25**.
 
 - `.nvmrc` está hoje em `24.19.0` — linha LTS, que §2 já manda preferir.
-- **Subir o `.nvmrc` para Node 25 ou superior exige trocar o mecanismo de instalação do pnpm no mesmo Pull Request**, sob pena de quebrar os dois jobs.
+- **Subir o `.nvmrc` para Node 25 ou superior exige trocar o mecanismo de instalação do pnpm no mesmo Pull Request**, sob pena de quebrar os três jobs.
 - A quebra seria barulhenta e aconteceria no Pull Request, não em produção. Ainda assim é previsível, e por isso fica registrada aqui em vez de ser redescoberta.
 
 A alternativa conhecida é `pnpm/setup`, sucessora oficial de `pnpm/action-setup` para pnpm 11+. Ela custa uma ação de terceiro a mais e não verifica o hash de `packageManager`; e derivar o Node dela exigiria `devEngines.runtime` no `package.json`, criando **segunda fonte de verdade** para uma versão que o `.nvmrc` já fixa — e que, pela documentação do fornecedor citada em §13.4, o Workers Builds também lê de lá.
