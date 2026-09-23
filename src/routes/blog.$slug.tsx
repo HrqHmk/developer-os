@@ -19,7 +19,8 @@ function BlogArticle() {
   const article = Route.useLoaderData()
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-8 px-6 py-16">
+    <main className="relative isolate mx-auto flex min-h-screen max-w-2xl flex-col gap-8 px-6 py-16">
+      <div aria-hidden="true" className="page-backdrop" />
       <div className="space-y-2">
         <h1 className="text-3xl font-bold sm:text-4xl">{article.title}</h1>
         <p className="text-sm text-muted-foreground">
