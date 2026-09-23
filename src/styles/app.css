@@ -83,6 +83,35 @@
 }
 
 /*
+ * Internal pages backdrop (Issue #66): the glow layer of `.hero-backdrop`
+ * only — the dotted grid stays Home-exclusive. Same recipe (color-mix from
+ * `--color-primary`, same gradient shape and mask), confined to the top of
+ * its containing block and bounded in height so it never grows with the
+ * page. The base class is the contained long-form treatment; listing and
+ * scanning pages add `.page-backdrop-listing`.
+ */
+.page-backdrop {
+  --page-backdrop-strength: 8%;
+  --page-backdrop-height: 20rem;
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: min(var(--page-backdrop-height), 100%);
+  z-index: -1;
+  background-image: radial-gradient(
+    circle at 50% 0%,
+    color-mix(in srgb, var(--color-primary) var(--page-backdrop-strength), transparent),
+    transparent 60%
+  );
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, black, transparent 75%);
+}
+
+.page-backdrop-listing {
+  --page-backdrop-strength: 12%;
+  --page-backdrop-height: 24rem;
+}
+
+/*
  * Styles the HTML the content pipeline compiles from Markdown (rendered via
  * dangerouslySetInnerHTML in blog.$slug.tsx). Plain scoped CSS instead of
  * @tailwindcss/typography, which isn't installed and isn't needed for this
