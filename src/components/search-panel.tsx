@@ -27,7 +27,8 @@ export function SearchPanel({ documents }: Readonly<{ documents: SearchDocument[
   const results = searchDocuments(documents, query)
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-8 px-6 py-16">
+    <main className="relative isolate mx-auto flex min-h-screen max-w-2xl flex-col gap-8 px-6 py-16">
+      <div aria-hidden="true" className="page-backdrop page-backdrop-listing" />
       <h1 className="text-3xl font-bold sm:text-4xl">Search</h1>
 
       <div className="space-y-2">

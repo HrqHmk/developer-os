@@ -240,6 +240,13 @@ Evitar:
 - múltiplas cores de destaque concorrendo entre si
 - bordas com alto contraste
 
+#### Backdrop das páginas
+
+- O dotted grid é exclusivo do Hero da Home.
+- As páginas internas usam um glow discreto no topo, derivado do glow do Hero da Home.
+- Intensidade e footprint podem variar conforme a natureza da página: mais contido em páginas de leitura longa, um pouco mais presente em páginas de listagem.
+- Contraste e legibilidade devem ser preservados: o texto secundário mantém ao menos 4.5:1 sobre o glow.
+
 ### Theme Strategy
 
 O tema deve ser implementado com CSS variables semânticas compatíveis

@@ -10,7 +10,8 @@ export const Route = createFileRoute('/projects/')({
 
 function Projects() {
   return (
-    <main className="mx-auto flex min-h-screen max-w-2xl flex-col gap-8 px-6 py-16">
+    <main className="relative isolate mx-auto flex min-h-screen max-w-2xl flex-col gap-8 px-6 py-16">
+      <div aria-hidden="true" className="page-backdrop page-backdrop-listing" />
       <h1 className="text-3xl font-bold sm:text-4xl">Projects</h1>
       <ul className="space-y-8">
         {projects.map((project) => (
