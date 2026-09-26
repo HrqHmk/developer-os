@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import { cloudflare } from '@cloudflare/vite-plugin'
+import { nitro } from 'nitro/vite'
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 import viteReact from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
@@ -32,9 +33,11 @@ const changelogEntries = buildChangelog()
 // Learning are out of Search v1's scope.
 const searchIndex = buildSearchIndex(articles, projects)
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [
-    cloudflare({ viteEnvironment: { name: 'ssr' } }),
+    // Exactly one deployment adapter per build. Cloudflare is the canonical
+    // target; `--mode vercel` swaps it for Nitro (experimental, disposable).
+    mode === 'vercel' ? nitro() : cloudflare({ viteEnvironment: { name: 'ssr' } }),
     tanstackStart({
       pages: [
         ...articles.map((article) => ({ path: `/blog/${article.slug}` })),
@@ -52,4 +55,4 @@ export default defineConfig({
     viteReact(),
     tailwindcss(),
   ],
-})
+}))
