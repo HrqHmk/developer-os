@@ -129,9 +129,10 @@
  */
 .hero-puzzle {
   --hero-puzzle-fill: color-mix(in srgb, var(--color-foreground) 7%, transparent);
-  --hero-puzzle-stroke: color-mix(in srgb, var(--color-muted-foreground) 40%, transparent);
+  --hero-puzzle-stroke: color-mix(in srgb, var(--color-muted-foreground) 58%, transparent);
+  --hero-puzzle-stroke-width: 2;
   --hero-puzzle-glow: drop-shadow(0 0 0 transparent);
-  --hero-puzzle-opacity-scale: 0.8;
+  --hero-puzzle-opacity-scale: 0.95;
   position: absolute;
   inset: 0;
   z-index: -1;
@@ -140,8 +141,9 @@
 
 .dark .hero-puzzle {
   --hero-puzzle-fill: color-mix(in srgb, var(--color-primary) 10%, transparent);
-  --hero-puzzle-stroke: color-mix(in srgb, var(--color-primary) 40%, transparent);
-  --hero-puzzle-glow: drop-shadow(0 0 6px color-mix(in srgb, var(--color-primary) 30%, transparent));
+  --hero-puzzle-stroke: color-mix(in srgb, var(--color-primary) 48%, transparent);
+  --hero-puzzle-stroke-width: 1.5;
+  --hero-puzzle-glow: drop-shadow(0 0 7px color-mix(in srgb, var(--color-primary) 36%, transparent));
   --hero-puzzle-opacity-scale: 1;
 }
 
@@ -161,7 +163,7 @@
   overflow: visible;
   fill: var(--hero-puzzle-fill);
   stroke: var(--hero-puzzle-stroke);
-  stroke-width: 1.5;
+  stroke-width: var(--hero-puzzle-stroke-width);
   stroke-linejoin: round;
   transform: scaleX(var(--flip));
   filter: blur(var(--blur)) var(--hero-puzzle-glow);

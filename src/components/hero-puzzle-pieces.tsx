@@ -43,18 +43,26 @@ type Piece = {
 }
 
 /**
- * Pieces sit in the margins and in the top and bottom bands of the hero,
- * never centered on the headline / lead / CTA column. Some peek in from the
- * edge and are clipped by the hero's `overflow-hidden`.
+ * A field of 12 pieces on desktop (6 on mobile) in three depth tiers: a few
+ * near pieces (large, sharp, more visible), medium ones, and small distant
+ * ones (fainter, blurrier). They sit in the margins and in the top and
+ * bottom bands of the hero, never centered on the badge / headline / lead /
+ * CTA column; several peek in from the edge and are clipped by the hero's
+ * `overflow-hidden`. Values are hand-tuned, not generated.
  */
 const PIECES: readonly Piece[] = [
-  { x: '-3%', y: '8%', size: '5.5rem', opacity: 0.8, blur: '0px', flip: 1, rotStart: '12deg', rotEnd: '48deg', dx: '2rem', dy: '10rem', duration: '70s', delay: '-20s' },
-  { x: '92%', y: '12%', size: '6rem', opacity: 0.75, blur: '0.5px', flip: -1, rotStart: '-20deg', rotEnd: '16deg', dx: '-1.5rem', dy: '8.5rem', duration: '84s', delay: '-46s' },
-  { x: '16%', y: '46%', size: '3rem', opacity: 0.5, blur: '2px', flip: 1, rotStart: '30deg', rotEnd: '-10deg', dx: '-1rem', dy: '7rem', duration: '58s', delay: '-12s', desktopOnly: true },
-  { x: '88%', y: '56%', size: '3.5rem', opacity: 0.5, blur: '1.5px', flip: -1, rotStart: '-35deg', rotEnd: '5deg', dx: '1.25rem', dy: '7.5rem', duration: '66s', delay: '-33s' },
-  { x: '22%', y: '70%', size: '2.5rem', opacity: 0.4, blur: '2px', flip: -1, rotStart: '8deg', rotEnd: '-32deg', dx: '1rem', dy: '2rem', duration: '52s', delay: '-27s', desktopOnly: true },
-  { x: '4%', y: '62%', size: '4rem', opacity: 0.7, blur: '0.5px', flip: 1, rotStart: '-14deg', rotEnd: '22deg', dx: '1.5rem', dy: '2.5rem', duration: '76s', delay: '-58s' },
-  { x: '94%', y: '36%', size: '3rem', opacity: 0.45, blur: '2px', flip: 1, rotStart: '40deg', rotEnd: '2deg', dx: '-1rem', dy: '6rem', duration: '62s', delay: '-8s', desktopOnly: true },
+  { x: '-4%', y: '6%', size: '6rem', opacity: 0.9, blur: '0px', flip: 1, rotStart: '12deg', rotEnd: '52deg', dx: '2.5rem', dy: '11rem', duration: '52s', delay: '-18s' },
+  { x: '92%', y: '10%', size: '6.5rem', opacity: 0.85, blur: '0.5px', flip: -1, rotStart: '-22deg', rotEnd: '18deg', dx: '-2rem', dy: '9.5rem', duration: '62s', delay: '-41s' },
+  { x: '3%', y: '58%', size: '4.75rem', opacity: 0.8, blur: '0.5px', flip: 1, rotStart: '-16deg', rotEnd: '26deg', dx: '1.75rem', dy: '3rem', duration: '46s', delay: '-30s' },
+  { x: '11%', y: '32%', size: '3.75rem', opacity: 0.6, blur: '1px', flip: -1, rotStart: '25deg', rotEnd: '-15deg', dx: '-1rem', dy: '5rem', duration: '40s', delay: '-9s', desktopOnly: true },
+  { x: '78%', y: '22%', size: '3.5rem', opacity: 0.6, blur: '1px', flip: 1, rotStart: '-30deg', rotEnd: '8deg', dx: '1.25rem', dy: '5.5rem', duration: '48s', delay: '-36s', desktopOnly: true },
+  { x: '91%', y: '56%', size: '3.75rem', opacity: 0.6, blur: '1px', flip: -1, rotStart: '-35deg', rotEnd: '8deg', dx: '1.25rem', dy: '3.5rem', duration: '56s', delay: '-33s' },
+  { x: '13%', y: '46%', size: '2.75rem', opacity: 0.5, blur: '1.5px', flip: 1, rotStart: '30deg', rotEnd: '-14deg', dx: '-1rem', dy: '3.5rem', duration: '44s', delay: '-12s', desktopOnly: true },
+  { x: '94%', y: '36%', size: '2.75rem', opacity: 0.5, blur: '1.75px', flip: 1, rotStart: '40deg', rotEnd: '2deg', dx: '-1rem', dy: '5rem', duration: '42s', delay: '-8s', desktopOnly: true },
+  { x: '12%', y: '72%', size: '2.25rem', opacity: 0.45, blur: '2px', flip: -1, rotStart: '8deg', rotEnd: '-34deg', dx: '1rem', dy: '2.5rem', duration: '38s', delay: '-27s', desktopOnly: true },
+  { x: '74%', y: '76%', size: '2.75rem', opacity: 0.5, blur: '1.5px', flip: 1, rotStart: '15deg', rotEnd: '-25deg', dx: '1rem', dy: '2rem', duration: '39s', delay: '-22s', desktopOnly: true },
+  { x: '95%', y: '82%', size: '2.75rem', opacity: 0.55, blur: '1.5px', flip: -1, rotStart: '-10deg', rotEnd: '30deg', dx: '-0.75rem', dy: '1.5rem', duration: '44s', delay: '-14s' },
+  { x: '-2%', y: '78%', size: '3.25rem', opacity: 0.55, blur: '1.25px', flip: 1, rotStart: '20deg', rotEnd: '-20deg', dx: '1.25rem', dy: '2rem', duration: '60s', delay: '-50s' },
 ]
 
 function pieceStyle(piece: Piece): CSSProperties {
