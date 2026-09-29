@@ -247,6 +247,27 @@ Evitar:
 - Intensidade e footprint podem variar conforme a natureza da página: mais contido em páginas de leitura longa, um pouco mais presente em páginas de listagem.
 - Contraste e legibilidade devem ser preservados: o texto secundário mantém ao menos 4.5:1 sobre o glow.
 
+#### Peças de quebra-cabeça do Hero
+
+Efeito decorativo e ambiente, mantido após o experimento da Issue #72 (veredito: manter). Implementado em `src/components/hero-puzzle-pieces.tsx` e no bloco `.hero-puzzle` de `app.css`.
+
+- Exclusivo do Hero da Home; não se estende às páginas internas.
+- Puramente decorativo: `aria-hidden`, sem elementos focáveis e `pointer-events: none`. Fica acima do `.hero-backdrop` e abaixo do conteúdo, contido pelo `overflow-hidden` do Hero.
+- Composição estática e determinística (sem aleatoriedade em runtime): 12 peças no desktop e 6 abaixo de `md`, em camadas de profundidade. Nenhuma peça fica atrás do badge, do título, do texto de apoio ou dos CTAs.
+- Cores derivadas apenas de tokens semânticos via `color-mix()`, sem token novo e sem `dark:`.
+- Dark: contorno e preenchimento violeta discretos, com glow extremamente sutil.
+- Light: linguagem própria, gráfica e nítida — contorno como identidade, preenchimento baixo, pouco blur e sem glow.
+- O texto secundário mantém ao menos 4.5:1 sobre as peças nos dois temas.
+
+##### Movimento
+
+Este efeito estabelece a primeira regra de movimento do design system:
+
+- Movimento é ambiente, lento e linear; só `transform` e `opacity` são animados. Blur e glow ficam em elementos internos que não animam.
+- Sem JavaScript, observers ou `will-change` sem evidência de necessidade.
+- `prefers-reduced-motion`: a animação só é declarada sob `no-preference`. Com `reduce` (ou sem suporte à media query) a composição fica estática, com opacidade reduzida.
+- Novo movimento em outras superfícies exige justificativa própria; esta regra não o autoriza por si só.
+
 ### Theme Strategy
 
 O tema deve ser implementado com CSS variables semânticas compatíveis
