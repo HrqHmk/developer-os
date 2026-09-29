@@ -1,6 +1,7 @@
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { projects } from 'virtual:projects'
 import { articles } from 'virtual:articles'
+import { HeroPuzzlePieces } from '../components/hero-puzzle-pieces'
 import { HomeHeader } from '../components/home-header'
 import { learningSections } from '../content/data/learning.ts'
 import { formatPublishedAt } from '../lib/format-published-at.ts'
@@ -35,6 +36,7 @@ function Hero() {
   return (
     <section className="relative isolate overflow-hidden px-6 py-16 text-center">
       <div aria-hidden="true" className="hero-backdrop" />
+      <HeroPuzzlePieces />
       <div className="relative mx-auto flex max-w-2xl flex-col items-center gap-6">
         <p className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-1 text-sm text-muted-foreground">
           <span aria-hidden="true" className="h-2 w-2 rounded-full bg-success" />

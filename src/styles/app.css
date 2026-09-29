@@ -112,6 +112,99 @@
 }
 
 /*
+ * Hero puzzle pieces (Issue #72) — VISUAL EXPERIMENT. Delete this whole
+ * block (plus `src/components/hero-puzzle-pieces.tsx` and its line in
+ * `Hero()`) to remove it.
+ *
+ * A decorative layer above `.hero-backdrop` and below the hero content;
+ * `overflow-hidden` on the hero clips it. Colors are `color-mix()` of
+ * existing tokens only: Light is the default (soft, neutral, outlined,
+ * no glow), `.dark` overrides it (faint violet, very subtle glow). Light
+ * fill stays low so muted text keeps >= 4.5:1 over a piece.
+ *
+ * Only `transform` and `opacity` animate. Filters (blur, glow) sit on the
+ * inner SVG, which never animates. Without an animation the composition is
+ * static, so reduced motion (and browsers without the query) get the still
+ * version; animation is opt-in via `prefers-reduced-motion: no-preference`.
+ */
+.hero-puzzle {
+  --hero-puzzle-fill: color-mix(in srgb, var(--color-foreground) 7%, transparent);
+  --hero-puzzle-stroke: color-mix(in srgb, var(--color-muted-foreground) 40%, transparent);
+  --hero-puzzle-glow: drop-shadow(0 0 0 transparent);
+  --hero-puzzle-opacity-scale: 0.8;
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.dark .hero-puzzle {
+  --hero-puzzle-fill: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  --hero-puzzle-stroke: color-mix(in srgb, var(--color-primary) 40%, transparent);
+  --hero-puzzle-glow: drop-shadow(0 0 6px color-mix(in srgb, var(--color-primary) 30%, transparent));
+  --hero-puzzle-opacity-scale: 1;
+}
+
+.hero-puzzle-piece {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--size);
+  opacity: calc(var(--opacity) * var(--hero-puzzle-opacity-scale));
+  transform: rotate(var(--rot-start));
+}
+
+.hero-puzzle-piece svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  fill: var(--hero-puzzle-fill);
+  stroke: var(--hero-puzzle-stroke);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  transform: scaleX(var(--flip));
+  filter: blur(var(--blur)) var(--hero-puzzle-glow);
+}
+
+@media (max-width: 47.99rem) {
+  .hero-puzzle-piece {
+    width: calc(var(--size) * 0.7);
+  }
+
+  .hero-puzzle-piece-wide {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-puzzle-piece {
+    opacity: calc(var(--opacity) * var(--hero-puzzle-opacity-scale) * 0.6);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hero-puzzle-piece {
+    animation: hero-puzzle-drift var(--dur) linear var(--delay) infinite;
+  }
+}
+
+@keyframes hero-puzzle-drift {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) rotate(var(--rot-start));
+  }
+  20%,
+  80% {
+    opacity: calc(var(--opacity) * var(--hero-puzzle-opacity-scale));
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--dx), var(--dy), 0) rotate(var(--rot-end));
+  }
+}
+
+/*
  * Styles the HTML the content pipeline compiles from Markdown (rendered via
  * dangerouslySetInnerHTML in blog.$slug.tsx). Plain scoped CSS instead of
  * @tailwindcss/typography, which isn't installed and isn't needed for this
