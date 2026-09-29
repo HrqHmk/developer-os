@@ -129,8 +129,10 @@
  */
 .hero-puzzle {
   --hero-puzzle-fill: color-mix(in srgb, var(--color-foreground) 7%, transparent);
-  --hero-puzzle-stroke: color-mix(in srgb, var(--color-muted-foreground) 58%, transparent);
+  --hero-puzzle-stroke: color-mix(in srgb, var(--color-muted-foreground) 78%, transparent);
+  --hero-puzzle-stroke-near: color-mix(in srgb, var(--color-foreground) 58%, transparent);
   --hero-puzzle-stroke-width: 2;
+  --hero-puzzle-blur-scale: 0.35;
   --hero-puzzle-glow: drop-shadow(0 0 0 transparent);
   --hero-puzzle-opacity-scale: 0.95;
   position: absolute;
@@ -143,6 +145,8 @@
   --hero-puzzle-fill: color-mix(in srgb, var(--color-primary) 10%, transparent);
   --hero-puzzle-stroke: color-mix(in srgb, var(--color-primary) 48%, transparent);
   --hero-puzzle-stroke-width: 1.5;
+  --hero-puzzle-stroke-near: var(--hero-puzzle-stroke);
+  --hero-puzzle-blur-scale: 1;
   --hero-puzzle-glow: drop-shadow(0 0 7px color-mix(in srgb, var(--color-primary) 36%, transparent));
   --hero-puzzle-opacity-scale: 1;
 }
@@ -166,7 +170,12 @@
   stroke-width: var(--hero-puzzle-stroke-width);
   stroke-linejoin: round;
   transform: scaleX(var(--flip));
-  filter: blur(var(--blur)) var(--hero-puzzle-glow);
+  filter: blur(calc(var(--blur) * var(--hero-puzzle-blur-scale))) var(--hero-puzzle-glow);
+}
+
+/* The three nearest pieces (first in the list) get a firmer outline in Light. */
+.hero-puzzle-piece:nth-child(-n + 3) svg {
+  stroke: var(--hero-puzzle-stroke-near);
 }
 
 @media (max-width: 47.99rem) {
