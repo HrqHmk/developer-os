@@ -9,7 +9,7 @@ const NAV_LINKS = [
   { to: '/search', label: 'Search' },
 ] as const
 
-const FOCUS_RING = 'outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring'
+const FOCUS_RING = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring'
 
 /**
  * Homepage-only header (Homepage Visual Refresh v1, Issue #57). No other
