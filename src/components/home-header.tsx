@@ -20,6 +20,10 @@ const FOCUS_RING = 'outline-none focus-visible:outline-2 focus-visible:outline-o
  * focus order at every width — column below `md`, row from `md` up. No
  * `order`, grid template areas, or reversed flex direction (Implementation
  * Plan v2, Finding 1 — Codex review).
+ *
+ * Below `md` the nav is a 3-column grid (auto-placed, row-major, so DOM order
+ * still equals visual order) instead of a wrapping flex row, which left ragged
+ * rows at narrow widths (Issue #76). From `md` up it is the flex row as before.
  */
 export function HomeHeader() {
   return (
@@ -27,7 +31,7 @@ export function HomeHeader() {
       <Link to="/" className={`text-lg font-semibold text-foreground ${FOCUS_RING}`}>
         Developer OS
       </Link>
-      <nav aria-label="Primary" className="flex flex-wrap gap-x-6 gap-y-2">
+      <nav aria-label="Primary" className="grid grid-cols-3 gap-x-6 gap-y-2 md:flex md:flex-wrap">
         {NAV_LINKS.map((link) => (
           <Link
             key={link.to}
