@@ -216,6 +216,31 @@
 }
 
 /*
+ * Home header menu (Issue #76, Alternative B). Below `md` the `Primary` nav
+ * collapses behind `.home-nav-toggle` — but only under `[data-js]`, the
+ * pre-paint flag set in `__root.tsx`. Without JavaScript the toggle stays
+ * hidden and the nav stays visible, so every link is still reachable. Plain
+ * scoped CSS rather than utilities because the rule combines three
+ * conditions (JS flag, breakpoint, open state); it is unlayered, so it wins
+ * over the nav's `grid`/`md:flex` utilities only where it applies. Hiding
+ * uses `display: none` (not the `hidden` attribute, which preflight forces
+ * with `!important`), so collapsed links leave the tab order.
+ */
+.home-nav-toggle {
+  display: none;
+}
+
+@media (max-width: 47.99rem) {
+  [data-js] .home-nav-toggle {
+    display: inline-flex;
+  }
+
+  [data-js] .home-nav:not([data-open]) {
+    display: none;
+  }
+}
+
+/*
  * Styles the HTML the content pipeline compiles from Markdown (rendered via
  * dangerouslySetInnerHTML in blog.$slug.tsx). Plain scoped CSS instead of
  * @tailwindcss/typography, which isn't installed and isn't needed for this
