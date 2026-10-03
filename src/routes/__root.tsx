@@ -35,11 +35,14 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
   return (
     // The pre-paint theme bootstrap below mutates this element's `class`
     // before hydration runs, so React's server-rendered class intentionally
-    // does not match the DOM's — see Issue #44 (Dark Mode v1).
+    // does not match the DOM's — see Issue #44 (Dark Mode v1). The `data-js`
+    // flag set next to it is the same kind of pre-paint mutation: it lets
+    // `HomeHeader` collapse its nav only when JavaScript runs (Issue #76).
     <html suppressHydrationWarning>
       <head>
         <HeadContent />
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP_SCRIPT }} />
+        <script dangerouslySetInnerHTML={{ __html: "document.documentElement.setAttribute('data-js', '')" }} />
       </head>
       <body className="bg-background font-sans text-foreground">
         <FloatingThemeControl />
