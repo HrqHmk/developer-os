@@ -1,12 +1,12 @@
 # Eval Case 001
 
-Protocol: evaluation_protocol_v1
+Protocol: evaluation_protocol_v1 (protocolo vigente na execução; os aprendizados deste caso originaram `evaluation-protocol-v2.md`)
 
 Mission source:
 GitHub Issue #76 — Responsive header: keep the Home header usable at reduced widths
 
 Status:
-Pronto para execução
+Executado e encerrado. O resultado histórico está em `eval-result-001.md`.
 
 Notes:
 - A GitHub Issue #76 é a fonte de verdade da missão.
