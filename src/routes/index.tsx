@@ -12,7 +12,7 @@ export const Route = createFileRoute('/')({
   component: Home,
 })
 
-const FOCUS_RING = 'outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring'
+const FOCUS_RING = 'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring'
 
 /** Verbatim from `/about`'s lead paragraph (`src/routes/about.tsx`) — not new copy. */
 const ABOUT_SUMMARY =
