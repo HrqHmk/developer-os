@@ -1,8 +1,16 @@
 import type { ReactNode } from 'react'
-import { Outlet, createRootRoute, HeadContent, Scripts } from '@tanstack/react-router'
+import {
+  Outlet,
+  createRootRoute,
+  HeadContent,
+  Scripts,
+  useRouterState,
+} from '@tanstack/react-router'
 import appCss from '../styles/app.css?url'
 import { THEME_BOOTSTRAP_SCRIPT } from '../lib/theme'
+import { htmlLang, localeFromPathname } from '../lib/locale'
 import { FloatingThemeControl } from '../components/theme-control'
+import { RssAlternateLink } from '../components/rss-alternate-link'
 
 export const Route = createRootRoute({
   head: () => ({
@@ -17,7 +25,6 @@ export const Route = createRootRoute({
     links: [
       { rel: 'icon', href: '/favicon.ico', sizes: '16x16 32x32 48x48' },
       { rel: 'stylesheet', href: appCss },
-      { rel: 'alternate', type: 'application/rss+xml', href: '/rss.xml' },
     ],
   }),
   component: RootComponent,
@@ -32,15 +39,21 @@ function RootComponent() {
 }
 
 function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
+  // The URL is the only source of truth for the language (Issue #83): `lang`
+  // follows the path, on every route including not-found, and is identical
+  // on server and client because both read the same location.
+  const pathname = useRouterState({ select: (state) => state.location.pathname })
+
   return (
     // The pre-paint theme bootstrap below mutates this element's `class`
     // before hydration runs, so React's server-rendered class intentionally
     // does not match the DOM's — see Issue #44 (Dark Mode v1). The `data-js`
     // flag set next to it is the same kind of pre-paint mutation: it lets
     // `HomeHeader` collapse its nav only when JavaScript runs (Issue #76).
-    <html suppressHydrationWarning>
+    <html lang={htmlLang(localeFromPathname(pathname))} suppressHydrationWarning>
       <head>
         <HeadContent />
+        <RssAlternateLink />
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP_SCRIPT }} />
         <script dangerouslySetInnerHTML={{ __html: "document.documentElement.setAttribute('data-js', '')" }} />
       </head>

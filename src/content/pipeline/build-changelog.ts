@@ -1,8 +1,10 @@
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import type { Locale } from '../../lib/locale.ts'
 import { changelogFrontmatterSchema } from '../schemas/changelog.ts'
-import { discoverEntries } from './discovery.ts'
+import { discoverEntries, entryFileName } from './discovery.ts'
 import { parseFrontmatter } from './frontmatter.ts'
+import { assertLocaleParity } from './locale-parity.ts'
 import { toHtml } from './markdown.ts'
 
 const defaultChangelogDir = join(
@@ -37,8 +39,11 @@ export type CompiledChangelogEntry = {
  * a timestamp, so it carries no time-of-day information to order same-day
  * entries by actual sequence.
  */
-export function buildChangelog(changelogDir = defaultChangelogDir): CompiledChangelogEntry[] {
-  const discovered = discoverEntries(changelogDir)
+export function buildChangelog(
+  changelogDir = defaultChangelogDir,
+  locale: Locale = 'en',
+): CompiledChangelogEntry[] {
+  const discovered = discoverEntries(changelogDir, entryFileName(locale))
 
   const entries = discovered.map(({ slug, raw }) => {
     const { frontmatter, body } = parseFrontmatter(raw, changelogFrontmatterSchema, slug)
@@ -54,4 +59,17 @@ export function buildChangelog(changelogDir = defaultChangelogDir): CompiledChan
   // `Array.prototype.sort` is stable, so entries with the same date keep the
   // deterministic discovery order (by slug) from `discoverEntries`.
   return entries.sort((a, b) => b.date.localeCompare(a.date))
+}
+
+/**
+ * Both language snapshots of the Changelog type, checked for parity (Issue
+ * #83): every entry has a PT-BR translation dated the same day.
+ */
+export function buildLocalizedChangelog(
+  changelogDir = defaultChangelogDir,
+): Record<Locale, CompiledChangelogEntry[]> {
+  const en = buildChangelog(changelogDir, 'en')
+  const ptBr = buildChangelog(changelogDir, 'pt-br')
+  assertLocaleParity('Changelog', en, ptBr, ['date'])
+  return { en, 'pt-br': ptBr }
 }

@@ -1,4 +1,5 @@
 import type { Plugin } from 'vite'
+import type { Locale } from '../../lib/locale.ts'
 import type { CompiledChangelogEntry } from './build-changelog.ts'
 
 const virtualModuleId = 'virtual:changelog'
@@ -11,7 +12,7 @@ const resolvedVirtualModuleId = '\0' + virtualModuleId
  * of `node:fs` / `gray-matter` / `unified`. It only serializes data it was
  * handed; the compiler itself is unreachable from here.
  */
-export function virtualChangelogPlugin(entries: CompiledChangelogEntry[]): Plugin {
+export function virtualChangelogPlugin(entries: Record<Locale, CompiledChangelogEntry[]>): Plugin {
   return {
     name: 'virtual-changelog',
     resolveId(id) {

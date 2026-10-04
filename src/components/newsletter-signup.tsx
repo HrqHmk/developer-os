@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
+import type { Locale } from '../lib/locale.ts'
 
 /**
  * Newsletter v1 (Issue #53), Model D: the browser POSTs straight to
@@ -39,7 +40,38 @@ const SENT_DELAY_MS = 800
 
 type SignupState = 'idle' | 'invalid' | 'submitting' | 'sent'
 
-export function NewsletterSignup() {
+/**
+ * First-party copy only (Issue #83). Buttondown's hosted page, confirmation
+ * email and privacy policy are third-party surfaces and stay as the provider
+ * serves them.
+ */
+const COPY_EN = {
+  label: 'Get Developer OS updates by email',
+  subscribe: 'Subscribe',
+  invalid: 'Enter a valid email address.',
+  sent: 'Request sent. Check your inbox to confirm your subscription. If nothing arrives in a few minutes, try again.',
+  troubleBefore: 'Having trouble? Subscribe directly on ',
+  privacyBefore: 'Your email is processed by Buttondown, the service that hosts this newsletter. See ',
+  privacyLink: "Buttondown's privacy policy",
+  privacyAfter: '. You can unsubscribe at any time.',
+}
+
+const COPY: Record<Locale, typeof COPY_EN> = {
+  en: COPY_EN,
+  'pt-br': {
+    label: 'Receba as atualizações do Developer OS por e-mail',
+    subscribe: 'Inscrever-se',
+    invalid: 'Informe um endereço de e-mail válido.',
+    sent: 'Pedido enviado. Confira sua caixa de entrada para confirmar a inscrição. Se nada chegar em alguns minutos, tente de novo.',
+    troubleBefore: 'Algum problema? Inscreva-se diretamente no ',
+    privacyBefore: 'Seu e-mail é processado pelo Buttondown, o serviço que hospeda esta newsletter. Veja a ',
+    privacyLink: 'política de privacidade do Buttondown',
+    privacyAfter: '. Você pode cancelar a inscrição a qualquer momento.',
+  },
+}
+
+export function NewsletterSignup({ locale = 'en' }: Readonly<{ locale?: Locale }>) {
+  const copy = COPY[locale]
   const emailId = useId()
   const errorId = useId()
   const [email, setEmail] = useState('')
@@ -110,7 +142,7 @@ export function NewsletterSignup() {
         className="space-y-3"
       >
         <label htmlFor={emailId} className="block text-sm text-muted-foreground">
-          Get Developer OS updates by email
+          {copy.label}
         </label>
 
         <div className="flex flex-wrap gap-2">
@@ -136,7 +168,7 @@ export function NewsletterSignup() {
             disabled={state === 'submitting'}
             className="border border-foreground px-3 py-2 text-sm text-foreground"
           >
-            Subscribe
+            {copy.subscribe}
           </button>
         </div>
 
@@ -159,7 +191,7 @@ export function NewsletterSignup() {
 
         {state === 'invalid' && (
           <p id={errorId} role="alert" className="text-sm text-destructive">
-            Enter a valid email address.
+            {copy.invalid}
           </p>
         )}
 
@@ -169,16 +201,13 @@ export function NewsletterSignup() {
         <div aria-live="polite" className="space-y-1">
           {state === 'sent' && (
             <>
-              <p className="text-sm text-muted-foreground">
-                Request sent. Check your inbox to confirm your subscription. If nothing arrives
-                in a few minutes, try again.
-              </p>
+              <p className="text-sm text-muted-foreground">{copy.sent}</p>
               {/* Recovery route, not a second placement: when Buttondown
                   answers with a CAPTCHA or a correction, that response is
                   swallowed by the hidden iframe and the subscriber never sees
                   it. This link is how they finish anyway. */}
               <p className="text-sm text-muted-foreground">
-                Having trouble? Subscribe directly on{' '}
+                {copy.troubleBefore}
                 <a href={BUTTONDOWN_HOSTED_URL} className="underline underline-offset-2">
                   Buttondown
                 </a>
@@ -189,11 +218,11 @@ export function NewsletterSignup() {
         </div>
 
         <p className="text-sm text-muted-foreground">
-          Your email is processed by Buttondown, the service that hosts this newsletter. See{' '}
+          {copy.privacyBefore}
           <a href={BUTTONDOWN_PRIVACY_URL} className="underline underline-offset-2">
-            Buttondown's privacy policy
+            {copy.privacyLink}
           </a>
-          . You can unsubscribe at any time.
+          {copy.privacyAfter}
         </p>
       </form>
 

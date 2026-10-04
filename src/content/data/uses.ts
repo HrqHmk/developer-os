@@ -1,3 +1,5 @@
+import type { Locale } from '../../lib/locale.ts'
+
 export type UsesItem = {
   name: string
   description: string
@@ -9,7 +11,7 @@ export type UsesSection = {
   items: UsesItem[]
 }
 
-export const usesSections: UsesSection[] = [
+const englishSections: UsesSection[] = [
   {
     title: 'Development',
     items: [
@@ -67,3 +69,73 @@ export const usesSections: UsesSection[] = [
     ],
   },
 ]
+
+const portugueseSections: UsesSection[] = [
+  {
+    title: 'Desenvolvimento',
+    items: [
+      {
+        name: 'Ubuntu',
+        description: 'Sistema operacional principal para desenvolvimento local e o ambiente de shell em que todo o resto roda.',
+      },
+      {
+        name: 'TypeScript',
+        description: 'Linguagem principal da aplicação, do pipeline de conteúdo e dos testes.',
+        href: 'https://www.typescriptlang.org/',
+      },
+      {
+        name: 'pnpm',
+        description: 'Gerenciador de pacotes de todo o workspace.',
+        href: 'https://pnpm.io/',
+      },
+      {
+        name: 'VS Code',
+        description: 'Editor principal, configurado para as convenções deste repositório.',
+        href: 'https://code.visualstudio.com/',
+      },
+      {
+        name: 'Warp',
+        description: 'Terminal principal para rodar as ferramentas de linha de comando com que este projeto é construído.',
+        href: 'https://www.warp.dev/',
+      },
+      {
+        name: 'GitHub',
+        description: 'Hospeda o repositório; Issues e Pull Requests são a forma como toda mudança é proposta e revisada.',
+        href: 'https://github.com/',
+      },
+    ],
+  },
+  {
+    title: 'Fluxo com IA',
+    items: [
+      {
+        name: 'ChatGPT',
+        description:
+          'Requisitos, discussão de arquitetura, crítica, orquestração e apoio à decisão — onde as ideias são postas à prova antes de virarem uma Issue.',
+        href: 'https://chatgpt.com/',
+      },
+      {
+        name: 'Claude Code',
+        description: 'Inspeção do repositório, planejamento e implementação — escreve o código que vai para produção.',
+        href: 'https://claude.com/claude-code',
+      },
+      {
+        name: 'Codex',
+        description:
+          'Segunda opinião independente: revisão de planejamento e de código quando a mudança justifica, mantida deliberadamente separada do agente que implementou — um revisor que também é o autor não é uma revisão.',
+        href: 'https://openai.com/codex/',
+      },
+    ],
+  },
+]
+
+/**
+ * One list per language (Issue #83). Both must list the same tools in the
+ * same order with the same links; names are product names and stay as they
+ * are, only titles and descriptions are translated. `localized-data.test.ts` holds
+ * that parity.
+ */
+export const usesSections: Record<Locale, UsesSection[]> = {
+  en: englishSections,
+  'pt-br': portugueseSections,
+}

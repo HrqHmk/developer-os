@@ -1,8 +1,10 @@
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import type { Locale } from '../../lib/locale.ts'
 import { projectFrontmatterSchema } from '../schemas/project.ts'
-import { discoverEntries } from './discovery.ts'
+import { discoverEntries, entryFileName } from './discovery.ts'
 import { parseFrontmatter } from './frontmatter.ts'
+import { assertLocaleParity } from './locale-parity.ts'
 import { toHtml } from './markdown.ts'
 
 const defaultProjectsDir = join(
@@ -31,8 +33,11 @@ export type CompiledProject = {
  * Deliberately has no cache/memoization, and no sort: there is no ordering
  * requirement for Projects today (unlike Article's `publishedAt`).
  */
-export function buildProjects(projectsDir = defaultProjectsDir): CompiledProject[] {
-  const discovered = discoverEntries(projectsDir)
+export function buildProjects(
+  projectsDir = defaultProjectsDir,
+  locale: Locale = 'en',
+): CompiledProject[] {
+  const discovered = discoverEntries(projectsDir, entryFileName(locale))
 
   return discovered.map(({ slug, raw }) => {
     const { frontmatter, body } = parseFrontmatter(raw, projectFrontmatterSchema, slug)
@@ -45,4 +50,18 @@ export function buildProjects(projectsDir = defaultProjectsDir): CompiledProject
       html: toHtml(body),
     }
   })
+}
+
+/**
+ * Both language snapshots of the Project type, checked for parity (Issue
+ * #83): every project has a PT-BR translation, and `technologies` and
+ * `repositoryUrl` describe the project, not its prose, so they must match.
+ */
+export function buildLocalizedProjects(
+  projectsDir = defaultProjectsDir,
+): Record<Locale, CompiledProject[]> {
+  const en = buildProjects(projectsDir, 'en')
+  const ptBr = buildProjects(projectsDir, 'pt-br')
+  assertLocaleParity('Project', en, ptBr, ['technologies', 'repositoryUrl'])
+  return { en, 'pt-br': ptBr }
 }
