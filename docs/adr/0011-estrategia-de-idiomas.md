@@ -1,9 +1,11 @@
 # ADR-0011 — Estratégia de Idiomas (EN / PT-BR)
 
 ## Status
-Proposto
+Aceito
 
 Introduzido pelo PR da Issue #83 (Eval Case 003). A arquitetura descrita aqui foi **aprovada para implementação** no gate humano do Implementation Plan v2 da Issue #83; a transição de **Proposto** para **Aceito** é reservada ao gate humano na revisão do PR, depois de validadas a implementação e as hipóteses técnicas.
+
+Aceito após o encerramento do Eval Case 003: implementação integrada pelo PR #84, avaliação independente `PASS WITH CONDITIONS` e Human Experience Gate `PASS` (ver `docs/evals/eval-result-003.md`).
 
 ## Contexto
 
