@@ -1,5 +1,6 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
+import type { Locale } from '../../lib/locale.ts'
 
 export type DiscoveredEntryFile = {
   slug: string
@@ -8,13 +9,25 @@ export type DiscoveredEntryFile = {
 }
 
 /**
- * Lists every content entry directory that contains an `index.md`, reading
- * its raw file content. Pure `node:fs`, no glob — this must be callable both
+ * The file that holds an entry's content in each language (Issue #83). Both
+ * live in the same entry directory, so an entry stays self-contained and its
+ * images are shared by relative path (ADR-0003 P8).
+ */
+export function entryFileName(locale: Locale): string {
+  return locale === 'pt-br' ? 'index.pt-br.md' : 'index.md'
+}
+
+/**
+ * Lists every content entry directory that contains `fileName` (`index.md`
+ * by default), reading its raw file content. Pure `node:fs`, no glob — this must be callable both
  * from `vite.config.ts` (plain Node, outside Vite's transform graph) and
  * from the pipeline itself. Shared by every content type (Article, Project,
  * ...) — each caller supplies its own `entriesDir`.
  */
-export function discoverEntries(entriesDir: string): DiscoveredEntryFile[] {
+export function discoverEntries(
+  entriesDir: string,
+  fileName = 'index.md',
+): DiscoveredEntryFile[] {
   let entries: string[]
   try {
     entries = readdirSync(entriesDir)
@@ -28,12 +41,12 @@ export function discoverEntries(entriesDir: string): DiscoveredEntryFile[] {
 
   return entries
     .filter((entry) => statSync(join(entriesDir, entry)).isDirectory())
-    .map((slug) => ({ slug, filePath: join(entriesDir, slug, 'index.md') }))
+    .map((slug) => ({ slug, filePath: join(entriesDir, slug, fileName) }))
     .filter(({ filePath }) => {
       try {
         return statSync(filePath).isFile()
       } catch (cause) {
-        // A missing `index.md` (ENOENT) means the directory simply isn't a
+        // A missing entry file (ENOENT) means the directory simply isn't a
         // content entry — that's expected and gets filtered out. Any other
         // error inspecting it (EACCES, EIO, ...) is a real filesystem
         // failure and must fail the build loudly, not be read as "no

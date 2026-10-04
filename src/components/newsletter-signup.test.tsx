@@ -301,3 +301,23 @@ describe('NewsletterSignup — Model D structural contract', () => {
     expect(container.innerHTML).not.toMatch(/api[-_ ]?key|secret|token|bearer|authorization/i)
   })
 })
+
+describe('NewsletterSignup — PT-BR copy (Issue #83)', () => {
+  it('renders its first-party copy in Portuguese, posting to the same provider endpoint', () => {
+    const { container } = render(<NewsletterSignup locale="pt-br" />)
+
+    expect(screen.getByLabelText('Receba as atualizações do Developer OS por e-mail')).toBeDefined()
+    expect(screen.getByRole('button', { name: 'Inscrever-se' })).toBeDefined()
+    expect(
+      screen.getByRole('link', { name: 'política de privacidade do Buttondown' }).getAttribute('href'),
+    ).toBe('https://buttondown.com/legal/privacy')
+    expect(container.querySelector('form')?.getAttribute('action')).toBe(ACTION)
+  })
+
+  it('reports an invalid address in Portuguese', () => {
+    render(<NewsletterSignup locale="pt-br" />)
+    fireEvent.invalid(screen.getByLabelText('Receba as atualizações do Developer OS por e-mail'))
+
+    expect(screen.getByRole('alert').textContent).toBe('Informe um endereço de e-mail válido.')
+  })
+})

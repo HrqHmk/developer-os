@@ -1,4 +1,5 @@
 import type { Plugin } from 'vite'
+import type { Locale } from '../../lib/locale.ts'
 import type { CompiledArticle } from './build-articles.ts'
 
 const virtualModuleId = 'virtual:articles'
@@ -11,7 +12,7 @@ const resolvedVirtualModuleId = '\0' + virtualModuleId
  * of `node:fs` / `gray-matter` / `unified`. It only serializes data it was
  * handed; the compiler itself is unreachable from here.
  */
-export function virtualArticlesPlugin(articles: CompiledArticle[]): Plugin {
+export function virtualArticlesPlugin(articles: Record<Locale, CompiledArticle[]>): Plugin {
   return {
     name: 'virtual-articles',
     resolveId(id) {

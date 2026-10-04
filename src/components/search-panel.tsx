@@ -2,10 +2,27 @@ import { useId, useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import type { SearchDocument } from '../content/pipeline/search-index.ts'
 import { searchDocuments } from '../lib/search.ts'
+import { localePrefix, type Locale } from '../lib/locale.ts'
 
-const TYPE_LABELS: Record<SearchDocument['type'], string> = {
-  article: 'Blog',
-  project: 'Project',
+const COPY_EN = {
+  title: 'Search',
+  label: 'Search Blog articles and Projects',
+  empty: 'Type to search Blog articles and Projects.',
+  noResults: (query: string) => `No results for “${query}”.`,
+  home: '← Home',
+  types: { article: 'Blog', project: 'Project' } satisfies Record<SearchDocument['type'], string>,
+}
+
+const COPY: Record<Locale, typeof COPY_EN> = {
+  en: COPY_EN,
+  'pt-br': {
+    title: 'Busca',
+    label: 'Buscar artigos do Blog e Projetos',
+    empty: 'Digite para buscar artigos do Blog e Projetos.',
+    noResults: (query: string) => `Nenhum resultado para “${query}”.`,
+    home: '← Início',
+    types: { article: 'Blog', project: 'Projeto' },
+  },
 }
 
 /**
@@ -18,8 +35,15 @@ const TYPE_LABELS: Record<SearchDocument['type'], string> = {
  * Search runs as you type, undebounced: it is a pure function over an
  * in-memory array, so a timer and its cleanup would be machinery for a
  * problem that does not exist.
+ *
+ * `documents` is the index of one language and `locale` that language
+ * (Issue #83): results link within it and are never mixed with the other.
  */
-export function SearchPanel({ documents }: Readonly<{ documents: SearchDocument[] }>) {
+export function SearchPanel({
+  documents,
+  locale = 'en',
+}: Readonly<{ documents: SearchDocument[]; locale?: Locale }>) {
+  const copy = COPY[locale]
   const inputId = useId()
   const [query, setQuery] = useState('')
 
@@ -29,11 +53,11 @@ export function SearchPanel({ documents }: Readonly<{ documents: SearchDocument[
   return (
     <main className="relative isolate mx-auto flex min-h-screen max-w-2xl flex-col gap-8 px-6 py-16">
       <div aria-hidden="true" className="page-backdrop page-backdrop-listing" />
-      <h1 className="text-3xl font-bold sm:text-4xl">Search</h1>
+      <h1 className="text-3xl font-bold sm:text-4xl">{copy.title}</h1>
 
       <div className="space-y-2">
         <label htmlFor={inputId} className="block text-sm text-muted-foreground">
-          Search Blog articles and Projects
+          {copy.label}
         </label>
         <input
           id={inputId}
@@ -49,21 +73,21 @@ export function SearchPanel({ documents }: Readonly<{ documents: SearchDocument[
           submit event to signal the update to a screen reader. */}
       <div aria-live="polite">
         {!hasQuery && (
-          <p className="text-muted-foreground">Type to search Blog articles and Projects.</p>
+          <p className="text-muted-foreground">{copy.empty}</p>
         )}
 
         {hasQuery && results.length === 0 && (
-          <p className="text-muted-foreground">No results for “{query.trim()}”.</p>
+          <p className="text-muted-foreground">{copy.noResults(query.trim())}</p>
         )}
 
         {hasQuery && results.length > 0 && (
           <ul className="space-y-8">
             {results.map((result) => (
               <li key={`${result.type}/${result.slug}`} className="space-y-2">
-                <SearchResultLink result={result}>
+                <SearchResultLink result={result} locale={locale}>
                   <h2 className="text-xl font-semibold hover:text-foreground">{result.title}</h2>
                   <p className="text-muted-foreground">{result.description}</p>
-                  <p className="text-sm text-muted-foreground">{TYPE_LABELS[result.type]}</p>
+                  <p className="text-sm text-muted-foreground">{copy.types[result.type]}</p>
                 </SearchResultLink>
               </li>
             ))}
@@ -71,8 +95,8 @@ export function SearchPanel({ documents }: Readonly<{ documents: SearchDocument[
         )}
       </div>
 
-      <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">
-        ← Home
+      <Link to={localePrefix(locale) || '/'} className="text-sm text-muted-foreground hover:text-foreground">
+        {copy.home}
       </Link>
     </main>
   )
@@ -85,16 +109,18 @@ export function SearchPanel({ documents }: Readonly<{ documents: SearchDocument[
  */
 function SearchResultLink({
   result,
+  locale,
   children,
-}: Readonly<{ result: SearchDocument; children: React.ReactNode }>) {
+}: Readonly<{ result: SearchDocument; locale: Locale; children: React.ReactNode }>) {
   const className = 'block space-y-2'
+  const prefix = localePrefix(locale)
 
   return result.type === 'article' ? (
-    <Link to="/blog/$slug" params={{ slug: result.slug }} className={className}>
+    <Link to={`${prefix}/blog/$slug`} params={{ slug: result.slug }} className={className}>
       {children}
     </Link>
   ) : (
-    <Link to="/projects/$slug" params={{ slug: result.slug }} className={className}>
+    <Link to={`${prefix}/projects/$slug`} params={{ slug: result.slug }} className={className}>
       {children}
     </Link>
   )

@@ -22,6 +22,19 @@ import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as ProjectsIndexRouteImport } from './routes/projects.index'
 import { Route as ProjectsSlugRouteImport } from './routes/projects.$slug'
+import { Route as PtBrIndexRouteImport } from './routes/pt-br/index'
+import { Route as PtBrAboutRouteImport } from './routes/pt-br/about'
+import { Route as PtBrArchitectureRouteImport } from './routes/pt-br/architecture'
+import { Route as PtBrBlogRouteImport } from './routes/pt-br/blog'
+import { Route as PtBrChangelogRouteImport } from './routes/pt-br/changelog'
+import { Route as PtBrLearningRouteImport } from './routes/pt-br/learning'
+import { Route as PtBrProjectsRouteImport } from './routes/pt-br/projects'
+import { Route as PtBrSearchRouteImport } from './routes/pt-br/search'
+import { Route as PtBrUsesRouteImport } from './routes/pt-br/uses'
+import { Route as PtBrBlogIndexRouteImport } from './routes/pt-br/blog.index'
+import { Route as PtBrBlogSlugRouteImport } from './routes/pt-br/blog.$slug'
+import { Route as PtBrProjectsIndexRouteImport } from './routes/pt-br/projects.index'
+import { Route as PtBrProjectsSlugRouteImport } from './routes/pt-br/projects.$slug'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -88,6 +101,71 @@ const ProjectsSlugRoute = ProjectsSlugRouteImport.update({
   path: '/$slug',
   getParentRoute: () => ProjectsRoute,
 } as any)
+const PtBrIndexRoute = PtBrIndexRouteImport.update({
+  id: '/pt-br/',
+  path: '/pt-br/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PtBrAboutRoute = PtBrAboutRouteImport.update({
+  id: '/pt-br/about',
+  path: '/pt-br/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PtBrArchitectureRoute = PtBrArchitectureRouteImport.update({
+  id: '/pt-br/architecture',
+  path: '/pt-br/architecture',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PtBrBlogRoute = PtBrBlogRouteImport.update({
+  id: '/pt-br/blog',
+  path: '/pt-br/blog',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PtBrChangelogRoute = PtBrChangelogRouteImport.update({
+  id: '/pt-br/changelog',
+  path: '/pt-br/changelog',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PtBrLearningRoute = PtBrLearningRouteImport.update({
+  id: '/pt-br/learning',
+  path: '/pt-br/learning',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PtBrProjectsRoute = PtBrProjectsRouteImport.update({
+  id: '/pt-br/projects',
+  path: '/pt-br/projects',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PtBrSearchRoute = PtBrSearchRouteImport.update({
+  id: '/pt-br/search',
+  path: '/pt-br/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PtBrUsesRoute = PtBrUsesRouteImport.update({
+  id: '/pt-br/uses',
+  path: '/pt-br/uses',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PtBrBlogIndexRoute = PtBrBlogIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PtBrBlogRoute,
+} as any)
+const PtBrBlogSlugRoute = PtBrBlogSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => PtBrBlogRoute,
+} as any)
+const PtBrProjectsIndexRoute = PtBrProjectsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => PtBrProjectsRoute,
+} as any)
+const PtBrProjectsSlugRoute = PtBrProjectsSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => PtBrProjectsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -101,8 +179,21 @@ export interface FileRoutesByFullPath {
   '/uses': typeof UsesRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/projects/$slug': typeof ProjectsSlugRoute
+  '/pt-br/about': typeof PtBrAboutRoute
+  '/pt-br/architecture': typeof PtBrArchitectureRoute
+  '/pt-br/blog': typeof PtBrBlogRouteWithChildren
+  '/pt-br/changelog': typeof PtBrChangelogRoute
+  '/pt-br/learning': typeof PtBrLearningRoute
+  '/pt-br/projects': typeof PtBrProjectsRouteWithChildren
+  '/pt-br/search': typeof PtBrSearchRoute
+  '/pt-br/uses': typeof PtBrUsesRoute
   '/blog/': typeof BlogIndexRoute
   '/projects/': typeof ProjectsIndexRoute
+  '/pt-br/': typeof PtBrIndexRoute
+  '/pt-br/blog/$slug': typeof PtBrBlogSlugRoute
+  '/pt-br/projects/$slug': typeof PtBrProjectsSlugRoute
+  '/pt-br/blog/': typeof PtBrBlogIndexRoute
+  '/pt-br/projects/': typeof PtBrProjectsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -114,8 +205,19 @@ export interface FileRoutesByTo {
   '/uses': typeof UsesRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/projects/$slug': typeof ProjectsSlugRoute
+  '/pt-br/about': typeof PtBrAboutRoute
+  '/pt-br/architecture': typeof PtBrArchitectureRoute
+  '/pt-br/changelog': typeof PtBrChangelogRoute
+  '/pt-br/learning': typeof PtBrLearningRoute
+  '/pt-br/search': typeof PtBrSearchRoute
+  '/pt-br/uses': typeof PtBrUsesRoute
   '/blog': typeof BlogIndexRoute
   '/projects': typeof ProjectsIndexRoute
+  '/pt-br': typeof PtBrIndexRoute
+  '/pt-br/blog/$slug': typeof PtBrBlogSlugRoute
+  '/pt-br/projects/$slug': typeof PtBrProjectsSlugRoute
+  '/pt-br/blog': typeof PtBrBlogIndexRoute
+  '/pt-br/projects': typeof PtBrProjectsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -130,8 +232,21 @@ export interface FileRoutesById {
   '/uses': typeof UsesRoute
   '/blog/$slug': typeof BlogSlugRoute
   '/projects/$slug': typeof ProjectsSlugRoute
+  '/pt-br/about': typeof PtBrAboutRoute
+  '/pt-br/architecture': typeof PtBrArchitectureRoute
+  '/pt-br/blog': typeof PtBrBlogRouteWithChildren
+  '/pt-br/changelog': typeof PtBrChangelogRoute
+  '/pt-br/learning': typeof PtBrLearningRoute
+  '/pt-br/projects': typeof PtBrProjectsRouteWithChildren
+  '/pt-br/search': typeof PtBrSearchRoute
+  '/pt-br/uses': typeof PtBrUsesRoute
   '/blog/': typeof BlogIndexRoute
   '/projects/': typeof ProjectsIndexRoute
+  '/pt-br/': typeof PtBrIndexRoute
+  '/pt-br/blog/$slug': typeof PtBrBlogSlugRoute
+  '/pt-br/projects/$slug': typeof PtBrProjectsSlugRoute
+  '/pt-br/blog/': typeof PtBrBlogIndexRoute
+  '/pt-br/projects/': typeof PtBrProjectsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -147,8 +262,21 @@ export interface FileRouteTypes {
     | '/uses'
     | '/blog/$slug'
     | '/projects/$slug'
+    | '/pt-br/about'
+    | '/pt-br/architecture'
+    | '/pt-br/blog'
+    | '/pt-br/changelog'
+    | '/pt-br/learning'
+    | '/pt-br/projects'
+    | '/pt-br/search'
+    | '/pt-br/uses'
     | '/blog/'
     | '/projects/'
+    | '/pt-br/'
+    | '/pt-br/blog/$slug'
+    | '/pt-br/projects/$slug'
+    | '/pt-br/blog/'
+    | '/pt-br/projects/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -160,8 +288,19 @@ export interface FileRouteTypes {
     | '/uses'
     | '/blog/$slug'
     | '/projects/$slug'
+    | '/pt-br/about'
+    | '/pt-br/architecture'
+    | '/pt-br/changelog'
+    | '/pt-br/learning'
+    | '/pt-br/search'
+    | '/pt-br/uses'
     | '/blog'
     | '/projects'
+    | '/pt-br'
+    | '/pt-br/blog/$slug'
+    | '/pt-br/projects/$slug'
+    | '/pt-br/blog'
+    | '/pt-br/projects'
   id:
     | '__root__'
     | '/'
@@ -175,8 +314,21 @@ export interface FileRouteTypes {
     | '/uses'
     | '/blog/$slug'
     | '/projects/$slug'
+    | '/pt-br/about'
+    | '/pt-br/architecture'
+    | '/pt-br/blog'
+    | '/pt-br/changelog'
+    | '/pt-br/learning'
+    | '/pt-br/projects'
+    | '/pt-br/search'
+    | '/pt-br/uses'
     | '/blog/'
     | '/projects/'
+    | '/pt-br/'
+    | '/pt-br/blog/$slug'
+    | '/pt-br/projects/$slug'
+    | '/pt-br/blog/'
+    | '/pt-br/projects/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -189,6 +341,15 @@ export interface RootRouteChildren {
   ProjectsRoute: typeof ProjectsRouteWithChildren
   SearchRoute: typeof SearchRoute
   UsesRoute: typeof UsesRoute
+  PtBrAboutRoute: typeof PtBrAboutRoute
+  PtBrArchitectureRoute: typeof PtBrArchitectureRoute
+  PtBrBlogRoute: typeof PtBrBlogRouteWithChildren
+  PtBrChangelogRoute: typeof PtBrChangelogRoute
+  PtBrLearningRoute: typeof PtBrLearningRoute
+  PtBrProjectsRoute: typeof PtBrProjectsRouteWithChildren
+  PtBrSearchRoute: typeof PtBrSearchRoute
+  PtBrUsesRoute: typeof PtBrUsesRoute
+  PtBrIndexRoute: typeof PtBrIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -284,6 +445,97 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProjectsSlugRouteImport
       parentRoute: typeof ProjectsRoute
     }
+    '/pt-br/': {
+      id: '/pt-br/'
+      path: '/pt-br'
+      fullPath: '/pt-br/'
+      preLoaderRoute: typeof PtBrIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pt-br/about': {
+      id: '/pt-br/about'
+      path: '/pt-br/about'
+      fullPath: '/pt-br/about'
+      preLoaderRoute: typeof PtBrAboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pt-br/architecture': {
+      id: '/pt-br/architecture'
+      path: '/pt-br/architecture'
+      fullPath: '/pt-br/architecture'
+      preLoaderRoute: typeof PtBrArchitectureRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pt-br/blog': {
+      id: '/pt-br/blog'
+      path: '/pt-br/blog'
+      fullPath: '/pt-br/blog'
+      preLoaderRoute: typeof PtBrBlogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pt-br/changelog': {
+      id: '/pt-br/changelog'
+      path: '/pt-br/changelog'
+      fullPath: '/pt-br/changelog'
+      preLoaderRoute: typeof PtBrChangelogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pt-br/learning': {
+      id: '/pt-br/learning'
+      path: '/pt-br/learning'
+      fullPath: '/pt-br/learning'
+      preLoaderRoute: typeof PtBrLearningRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pt-br/projects': {
+      id: '/pt-br/projects'
+      path: '/pt-br/projects'
+      fullPath: '/pt-br/projects'
+      preLoaderRoute: typeof PtBrProjectsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pt-br/search': {
+      id: '/pt-br/search'
+      path: '/pt-br/search'
+      fullPath: '/pt-br/search'
+      preLoaderRoute: typeof PtBrSearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pt-br/uses': {
+      id: '/pt-br/uses'
+      path: '/pt-br/uses'
+      fullPath: '/pt-br/uses'
+      preLoaderRoute: typeof PtBrUsesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pt-br/blog/': {
+      id: '/pt-br/blog/'
+      path: '/'
+      fullPath: '/pt-br/blog/'
+      preLoaderRoute: typeof PtBrBlogIndexRouteImport
+      parentRoute: typeof PtBrBlogRoute
+    }
+    '/pt-br/blog/$slug': {
+      id: '/pt-br/blog/$slug'
+      path: '/$slug'
+      fullPath: '/pt-br/blog/$slug'
+      preLoaderRoute: typeof PtBrBlogSlugRouteImport
+      parentRoute: typeof PtBrBlogRoute
+    }
+    '/pt-br/projects/': {
+      id: '/pt-br/projects/'
+      path: '/'
+      fullPath: '/pt-br/projects/'
+      preLoaderRoute: typeof PtBrProjectsIndexRouteImport
+      parentRoute: typeof PtBrProjectsRoute
+    }
+    '/pt-br/projects/$slug': {
+      id: '/pt-br/projects/$slug'
+      path: '/$slug'
+      fullPath: '/pt-br/projects/$slug'
+      preLoaderRoute: typeof PtBrProjectsSlugRouteImport
+      parentRoute: typeof PtBrProjectsRoute
+    }
   }
 }
 
@@ -313,6 +565,34 @@ const ProjectsRouteWithChildren = ProjectsRoute._addFileChildren(
   ProjectsRouteChildren,
 )
 
+interface PtBrBlogRouteChildren {
+  PtBrBlogSlugRoute: typeof PtBrBlogSlugRoute
+  PtBrBlogIndexRoute: typeof PtBrBlogIndexRoute
+}
+
+const PtBrBlogRouteChildren: PtBrBlogRouteChildren = {
+  PtBrBlogSlugRoute: PtBrBlogSlugRoute,
+  PtBrBlogIndexRoute: PtBrBlogIndexRoute,
+}
+
+const PtBrBlogRouteWithChildren = PtBrBlogRoute._addFileChildren(
+  PtBrBlogRouteChildren,
+)
+
+interface PtBrProjectsRouteChildren {
+  PtBrProjectsSlugRoute: typeof PtBrProjectsSlugRoute
+  PtBrProjectsIndexRoute: typeof PtBrProjectsIndexRoute
+}
+
+const PtBrProjectsRouteChildren: PtBrProjectsRouteChildren = {
+  PtBrProjectsSlugRoute: PtBrProjectsSlugRoute,
+  PtBrProjectsIndexRoute: PtBrProjectsIndexRoute,
+}
+
+const PtBrProjectsRouteWithChildren = PtBrProjectsRoute._addFileChildren(
+  PtBrProjectsRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
@@ -323,6 +603,15 @@ const rootRouteChildren: RootRouteChildren = {
   ProjectsRoute: ProjectsRouteWithChildren,
   SearchRoute: SearchRoute,
   UsesRoute: UsesRoute,
+  PtBrAboutRoute: PtBrAboutRoute,
+  PtBrArchitectureRoute: PtBrArchitectureRoute,
+  PtBrBlogRoute: PtBrBlogRouteWithChildren,
+  PtBrChangelogRoute: PtBrChangelogRoute,
+  PtBrLearningRoute: PtBrLearningRoute,
+  PtBrProjectsRoute: PtBrProjectsRouteWithChildren,
+  PtBrSearchRoute: PtBrSearchRoute,
+  PtBrUsesRoute: PtBrUsesRoute,
+  PtBrIndexRoute: PtBrIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

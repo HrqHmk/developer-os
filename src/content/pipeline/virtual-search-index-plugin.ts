@@ -1,4 +1,5 @@
 import type { Plugin } from 'vite'
+import type { Locale } from '../../lib/locale.ts'
 import type { SearchDocument } from './search-index.ts'
 
 const virtualModuleId = 'virtual:search-index'
@@ -9,13 +10,14 @@ const resolvedVirtualModuleId = '\0' + virtualModuleId
  * virtual module (Issue #48). Receives the index as a parameter — it never
  * imports `search-index`, `plain-text`, `build-articles`, `build-projects`,
  * or any of `node:fs` / `gray-matter` / `unified`. It only serializes data
- * it was handed.
+ * it was handed. One index per language, so a search never mixes them
+ * (Issue #83).
  *
  * Unlike `virtual:articles`/`virtual:projects`, this module carries a
  * derived artifact rather than a content type — the same relationship
  * `rss-asset-plugin.ts` has to the article snapshot.
  */
-export function virtualSearchIndexPlugin(searchIndex: SearchDocument[]): Plugin {
+export function virtualSearchIndexPlugin(searchIndex: Record<Locale, SearchDocument[]>): Plugin {
   return {
     name: 'virtual-search-index',
     resolveId(id) {

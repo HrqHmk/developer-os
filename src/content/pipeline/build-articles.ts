@@ -1,8 +1,10 @@
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import type { Locale } from '../../lib/locale.ts'
 import { articleFrontmatterSchema } from '../schemas/article.ts'
-import { discoverEntries } from './discovery.ts'
+import { discoverEntries, entryFileName } from './discovery.ts'
 import { parseFrontmatter } from './frontmatter.ts'
+import { assertLocaleParity } from './locale-parity.ts'
 import { toHtml } from './markdown.ts'
 
 const defaultArticlesDir = join(
@@ -32,8 +34,11 @@ export type CompiledArticle = {
  * function of `articlesDir`, called once per config evaluation by
  * `vite.config.ts`, which owns and distributes the resulting snapshot.
  */
-export function buildArticles(articlesDir = defaultArticlesDir): CompiledArticle[] {
-  const discovered = discoverEntries(articlesDir)
+export function buildArticles(
+  articlesDir = defaultArticlesDir,
+  locale: Locale = 'en',
+): CompiledArticle[] {
+  const discovered = discoverEntries(articlesDir, entryFileName(locale))
 
   const articles = discovered.map(({ slug, raw }) => {
     const { frontmatter, body } = parseFrontmatter(raw, articleFrontmatterSchema, slug)
@@ -50,4 +55,19 @@ export function buildArticles(articlesDir = defaultArticlesDir): CompiledArticle
   // order. `Array.prototype.sort` is stable, so articles with the same date
   // keep the deterministic discovery order (by slug) from `discoverEntries`.
   return articles.sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
+}
+
+/**
+ * Both language snapshots of the Article type, built from the same entry
+ * directories and checked for parity (Issue #83): the build fails if an
+ * article lacks its PT-BR translation, or if the translation's `publishedAt`
+ * differs from the original's.
+ */
+export function buildLocalizedArticles(
+  articlesDir = defaultArticlesDir,
+): Record<Locale, CompiledArticle[]> {
+  const en = buildArticles(articlesDir, 'en')
+  const ptBr = buildArticles(articlesDir, 'pt-br')
+  assertLocaleParity('Article', en, ptBr, ['publishedAt'])
+  return { en, 'pt-br': ptBr }
 }

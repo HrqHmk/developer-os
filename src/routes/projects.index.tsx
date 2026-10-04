@@ -1,32 +1,9 @@
-import { Link, createFileRoute } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import { projects } from 'virtual:projects'
+import { ProjectsIndexPage, projectsTitle } from '../components/projects-index-page'
+import { pageHead } from '../lib/site-metadata.ts'
 
 export const Route = createFileRoute('/projects/')({
-  head: () => ({
-    meta: [{ title: 'Projects — Developer OS' }],
-  }),
-  component: Projects,
+  head: () => pageHead('/projects', `${projectsTitle('en')} — Developer OS`),
+  component: () => <ProjectsIndexPage locale="en" projects={projects.en} />,
 })
-
-function Projects() {
-  return (
-    <main className="relative isolate mx-auto flex min-h-screen max-w-2xl flex-col gap-8 px-6 py-16">
-      <div aria-hidden="true" className="page-backdrop page-backdrop-listing" />
-      <h1 className="text-3xl font-bold sm:text-4xl">Projects</h1>
-      <ul className="space-y-8">
-        {projects.map((project) => (
-          <li key={project.slug} className="space-y-2">
-            <Link to="/projects/$slug" params={{ slug: project.slug }} className="block space-y-2">
-              <h2 className="text-xl font-semibold hover:text-foreground">{project.title}</h2>
-              <p className="text-muted-foreground">{project.description}</p>
-              <p className="text-sm text-muted-foreground">{project.technologies.join(' · ')}</p>
-            </Link>
-          </li>
-        ))}
-      </ul>
-      <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">
-        ← Home
-      </Link>
-    </main>
-  )
-}

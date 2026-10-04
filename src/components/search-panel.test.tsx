@@ -11,6 +11,7 @@ import {
   createRouter,
 } from '@tanstack/react-router'
 import type { SearchDocument } from '../content/pipeline/search-index'
+import type { Locale } from '../lib/locale'
 import { SearchPanel } from './search-panel'
 
 /**
@@ -40,20 +41,17 @@ const documents: SearchDocument[] = [
  * to supply that context — the stub `$slug` routes are only there for link
  * targets to resolve. Nothing here asserts router behaviour.
  */
-function renderSearchPanel() {
+function renderSearchPanel(locale: Locale = 'en') {
   const rootRoute = createRootRoute({ component: () => <Outlet /> })
   const routeTree = rootRoute.addChildren([
     createRoute({
       getParentRoute: () => rootRoute,
       path: '/',
-      component: () => <SearchPanel documents={documents} />,
+      component: () => <SearchPanel documents={documents} locale={locale} />,
     }),
-    createRoute({ getParentRoute: () => rootRoute, path: '/blog/$slug', component: () => null }),
-    createRoute({
-      getParentRoute: () => rootRoute,
-      path: '/projects/$slug',
-      component: () => null,
-    }),
+    ...['/blog/$slug', '/projects/$slug', '/pt-br', '/pt-br/blog/$slug', '/pt-br/projects/$slug'].map(
+      (path) => createRoute({ getParentRoute: () => rootRoute, path, component: () => null }),
+    ),
   ])
 
   const router = createRouter({
@@ -153,5 +151,36 @@ describe('SearchPanel', () => {
 
     expect(articleHref).toMatch(/^\/blog\//)
     expect(projectHref).toMatch(/^\/projects\//)
+  })
+})
+
+describe('SearchPanel in PT-BR (Issue #83)', () => {
+  it('is labelled in Portuguese', async () => {
+    renderSearchPanel('pt-br')
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Busca' })).toBeDefined()
+    expect(screen.getByRole('searchbox', { name: 'Buscar artigos do Blog e Projetos' })).toBeDefined()
+    expect(screen.getByText('Digite para buscar artigos do Blog e Projetos.')).toBeDefined()
+    expect(screen.getByRole('link', { name: '← Início' }).getAttribute('href')).toBe('/pt-br')
+  })
+
+  it('reports no results in Portuguese', async () => {
+    const { user } = renderSearchPanel('pt-br')
+    await user.type(await screen.findByRole('searchbox'), 'absent')
+
+    expect(screen.getByText('Nenhum resultado para “absent”.')).toBeDefined()
+  })
+
+  it('links every result to its PT-BR page, with Portuguese type labels', async () => {
+    const { user } = renderSearchPanel('pt-br')
+    await user.type(await screen.findByRole('searchbox'), 'developer')
+
+    const article = within(resultFor('Why Developer OS'))
+    expect(article.getByText('Blog')).toBeDefined()
+    expect(article.getByRole('link').getAttribute('href')).toBe('/pt-br/blog/why-developer-os')
+
+    const project = within(resultFor('Developer OS Platform'))
+    expect(project.getByText('Projeto')).toBeDefined()
+    expect(project.getByRole('link').getAttribute('href')).toBe('/pt-br/projects/developer-os')
   })
 })
