@@ -10,7 +10,14 @@ export const Route = createFileRoute('/blog/$slug')({
     return article
   },
   head: ({ loaderData, params }) =>
-    loaderData ? pageHead(`/blog/${params.slug}`, `${loaderData.title} — Developer OS`) : {},
+    loaderData
+      ? pageHead(
+          `/blog/${params.slug}`,
+          `${loaderData.title} — Developer OS`,
+          loaderData.description,
+          { canonicalLocale: 'en' },
+        )
+      : {},
   component: function BlogArticle() {
     return <BlogArticlePage locale="en" article={Route.useLoaderData()} />
   },

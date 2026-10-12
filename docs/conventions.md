@@ -634,3 +634,12 @@ Como em §13.9.6 e §13.10: o que não foi observado é registrado como tal, e n
 - **Estado do proxy do apex:** não confirmado no dashboard. Há apenas sinais indiretos por HTTP (`server: cloudflare`, `cf-ray`, endereços de borda da Cloudflare), consistentes com tráfego pela borda, que não substituem a confirmação da configuração.
 
 **O que este registro não faz.** Não afirma que os valores de §13.11.1 e o estado de §13.11.2 foram lidos no dashboard por agente — são relatos de Henrique cujo efeito foi verificado por HTTP. Não fecha a Issue #62: o fechamento depende do smoke check final previsto no Implementation Plan.
+
+### 13.12 Canonical de artigos
+
+Nasce da Issue #87. Registra a política de `<link rel="canonical">` para as páginas de artigo; não é uma decisão de SEO global.
+
+- **Artigos declaram canonical autorreferente por idioma.** `/blog/<slug>` aponta para `https://developeros.dev/blog/<slug>` e `/pt-br/blog/<slug>` para `https://developeros.dev/pt-br/blog/<slug>`. Nunca há canonical cruzado entre idiomas: ele é igual ao `hreflang` do próprio idioma, e `x-default` continua apontando para o inglês (ADR-0011 I6).
+- **Mecanismo.** Opt-in explícito em `pageHead()` (`src/lib/site-metadata.ts`), pela opção `canonicalLocale`, usado apenas pelas duas rotas de artigo. Sem a opção, nenhum canonical é emitido.
+- **A regra não se aplica automaticamente às demais páginas.** A home mantém o canonical próprio da Issue #62; as outras páginas continuam sem canonical. Uma política de SEO para o site inteiro precisa de análise separada.
+- **Motivação.** A barra final responde `307`, temporário (§13.8), e URLs com query string (`?ref=…`, §13.11.1) respondem `200` com o mesmo conteúdo. O canonical consolida essas variantes na URL própria do artigo.
