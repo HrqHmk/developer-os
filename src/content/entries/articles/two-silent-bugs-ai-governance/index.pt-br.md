@@ -4,8 +4,6 @@ description: "Dois bugs silenciosos no Developer OS foram pegos em estágios opo
 publishedAt: "2026-09-27"
 ---
 
-# Dois bugs silenciosos. Um antes de o código existir, outro depois que tudo estava verde.
-
 Existe uma sensação particularmente confortável no desenvolvimento de software quando tudo fica verde.
 
 Os testes passam.  

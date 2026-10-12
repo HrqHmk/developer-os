@@ -4,8 +4,6 @@ description: "Two silent bugs in Developer OS were caught at opposite stages: on
 publishedAt: "2026-09-27"
 ---
 
-# Two silent bugs. One before the code existed, another after everything was green.
-
 There's a particularly comfortable feeling in software development when everything turns green.
 
 Tests pass.  
