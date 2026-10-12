@@ -8,7 +8,9 @@ import { htmlLang, localizedPath, type Locale } from './locale.ts'
  * that Vitest cannot resolve, so metadata declared inline in the route could
  * not be tested. The home routes use `homeHeadFor(locale)` as their `head()`.
  *
- * Scope: the social/canonical tags are only used by the two home pages.
+ * Scope: the social tags are only used by the two home pages. A canonical
+ * link is emitted by the home pages and, by explicit opt-in through
+ * `pageHead`'s `canonicalLocale` option, by article pages (Issue #87).
  * Nothing here is a site-wide default, and it must not be added to
  * `__root.tsx`.
  */
@@ -75,11 +77,24 @@ export function languageAlternateLinks(englishPath: string) {
 /**
  * The `head()` of an ordinary page: its title, its description when it has
  * one, and its language alternates.
+ *
+ * A canonical link is opt-in: pass `canonicalLocale` to get a self-referencing
+ * canonical for the page in that language (Issue #87, articles only). It is
+ * built from the same URL as the page's own `hreflang` alternate, so the two
+ * cannot diverge. Without it, no canonical is emitted.
  */
-export function pageHead(englishPath: string, title: string, description?: string) {
+export function pageHead(
+  englishPath: string,
+  title: string,
+  description?: string,
+  options?: { canonicalLocale?: Locale },
+) {
+  const canonicalLink = options?.canonicalLocale
+    ? [{ rel: 'canonical', href: absoluteUrl(localizedPath(options.canonicalLocale, englishPath)) }]
+    : []
   return {
     meta: [{ title }, ...(description ? [{ name: 'description', content: description }] : [])],
-    links: languageAlternateLinks(englishPath),
+    links: [...canonicalLink, ...languageAlternateLinks(englishPath)],
   }
 }
 

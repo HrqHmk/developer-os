@@ -120,3 +120,55 @@ describe('pageHead (Issue #83)', () => {
     ])
   })
 })
+
+describe('pageHead canonical opt-in (Issue #87)', () => {
+  type LinkEntry = { rel: string; href: string; hrefLang?: string }
+  const canonicals = (links: LinkEntry[]) => links.filter((link) => link.rel === 'canonical')
+
+  it('emits no canonical unless asked to', () => {
+    const head = pageHead('/blog/a-slug', 'A — Developer OS', 'A description.')
+    expect(canonicals(head.links)).toHaveLength(0)
+    expect(head.links).toEqual(languageAlternateLinks('/blog/a-slug'))
+  })
+
+  it('points the English canonical to the English URL', () => {
+    const head = pageHead('/blog/a-slug', 'A — Developer OS', 'A description.', {
+      canonicalLocale: 'en',
+    })
+    expect(canonicals(head.links)).toEqual([
+      { rel: 'canonical', href: 'https://developeros.dev/blog/a-slug' },
+    ])
+  })
+
+  it('points the PT-BR canonical to the PT-BR URL, never to English', () => {
+    const head = pageHead('/blog/a-slug', 'A — Developer OS', 'Uma descrição.', {
+      canonicalLocale: 'pt-br',
+    })
+    expect(canonicals(head.links)).toEqual([
+      { rel: 'canonical', href: 'https://developeros.dev/pt-br/blog/a-slug' },
+    ])
+  })
+
+  it.each([
+    ['en', 'en'],
+    ['pt-br', 'pt-BR'],
+  ] as const)('keeps the %s canonical equal to its own hreflang alternate', (locale, hrefLang) => {
+    const head = pageHead('/blog/a-slug', 'A — Developer OS', 'A description.', {
+      canonicalLocale: locale,
+    })
+    const alternate = (head.links as LinkEntry[]).find((link) => link.hrefLang === hrefLang)
+    expect(canonicals(head.links)[0]?.href).toBe(alternate?.href)
+  })
+
+  it('keeps the alternates and emits a single description alongside the canonical', () => {
+    const head = pageHead('/blog/a-slug', 'A — Developer OS', 'A description.', {
+      canonicalLocale: 'pt-br',
+    })
+    expect(head.links.filter((link) => link.rel === 'alternate')).toEqual(
+      languageAlternateLinks('/blog/a-slug'),
+    )
+    expect(head.meta.filter((entry) => 'name' in entry && entry.name === 'description')).toEqual([
+      { name: 'description', content: 'A description.' },
+    ])
+  })
+})
