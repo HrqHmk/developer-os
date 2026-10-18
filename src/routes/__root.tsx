@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import {
   Outlet,
   createRootRoute,
@@ -8,6 +8,7 @@ import {
 } from '@tanstack/react-router'
 import appCss from '../styles/app.css?url'
 import { THEME_BOOTSTRAP_SCRIPT } from '../lib/theme'
+import { ANALYTICS_BOOTSTRAP_SCRIPT, trackPageview } from '../integrations/analytics'
 import { htmlLang, localeFromPathname } from '../lib/locale'
 import { FloatingThemeControl } from '../components/theme-control'
 import { RssAlternateLink } from '../components/rss-alternate-link'
@@ -43,6 +44,13 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
   // follows the path, on every route including not-found, and is identical
   // on server and client because both read the same location.
   const pathname = useRouterState({ select: (state) => state.location.pathname })
+  // One pageview per resolved pathname (Issue #93): `resolvedLocation` is set
+  // on hydration and when a navigation completes, so superseded navigations
+  // and query- or hash-only changes never reach the analytics boundary.
+  const resolvedPathname = useRouterState({ select: (state) => state.resolvedLocation?.pathname })
+  useEffect(() => {
+    if (resolvedPathname) trackPageview(resolvedPathname)
+  }, [resolvedPathname])
 
   return (
     // The pre-paint theme bootstrap below mutates this element's `class`
@@ -56,6 +64,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
         <RssAlternateLink />
         <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP_SCRIPT }} />
         <script dangerouslySetInnerHTML={{ __html: "document.documentElement.setAttribute('data-js', '')" }} />
+        <script dangerouslySetInnerHTML={{ __html: ANALYTICS_BOOTSTRAP_SCRIPT }} />
       </head>
       <body className="bg-background font-sans text-foreground">
         <FloatingThemeControl />
