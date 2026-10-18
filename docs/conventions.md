@@ -643,3 +643,65 @@ Nasce da Issue #87. Registra a política de `<link rel="canonical">` para as pá
 - **Mecanismo.** Opt-in explícito em `pageHead()` (`src/lib/site-metadata.ts`), pela opção `canonicalLocale`, usado apenas pelas duas rotas de artigo. Sem a opção, nenhum canonical é emitido.
 - **A regra não se aplica automaticamente às demais páginas.** A home mantém o canonical próprio da Issue #62; as outras páginas continuam sem canonical. Uma política de SEO para o site inteiro precisa de análise separada.
 - **Motivação.** A barra final responde `307`, temporário (§13.8), e URLs com query string (`?ref=…`, §13.11.1) respondem `200` com o mesmo conteúdo. O canonical consolida essas variantes na URL própria do artigo.
+
+---
+
+## 14. Analytics
+
+Nasce da Issue #93 (retomada da Issue #52, adiada). Governado pelo ADR-0007 (A1–A9) e pelo ADR-0010; este capítulo registra as **convenções operacionais** que o ADR-0007 §3 remeteu para cá, agora que existe um documento raiz. Não introduz decisão arquitetural.
+
+> **Estado: implementado, não ativado.** Mesclar a Pull Request da Issue #93 **é** a ativação da coleta (merge publica em produção). Os gates **G2** (avaliação de privacidade) e **G3** (condições do fornecedor, §14.6) são condição humana de merge e **não** estão concluídos por este documento. Nenhum artefato deste repositório afirma conformidade com LGPD/GDPR.
+
+### 14.1 Onde o código vive
+
+- **Uma única fronteira:** `src/integrations/analytics.ts` é o único arquivo que conhece o fornecedor (A4). Exporta `trackPageview(pathname)` e `ANALYTICS_BOOTSTRAP_SCRIPT`.
+- **Bootstrap:** o script inline é emitido no `<head>` do documento raiz (`src/routes/__root.tsx`), ao lado dos scripts de tema e `data-js`. Ele cria `window.goatcounter = { no_onload: true }` **e só então** cria a tag `<script async src="https://gc.zgo.at/count.js">`. A ordem é por construção: o fornecedor lê `no_onload` no instante em que executa, e o React 19 não garante a posição de uma tag `<script async>` renderizada por ele. Não existe tag `count.js` no HTML gerado.
+- **Disparo:** um `useEffect` no documento raiz chama `trackPageview` com `resolvedLocation.pathname`. `resolvedLocation` é definido na hidratação e ao fim de cada navegação concluída; navegações superadas e mudanças só de query ou de hash não o alteram e, portanto, não contam.
+- **Remoção:** substituir `trackPageview` por `() => {}` e o bootstrap por `''` não altera nenhum comportamento funcional (critério de A4). Isso foi demonstrado no PR da Issue #93.
+
+### 14.2 Regra de host
+
+O pageview só é enviado quando `location.hostname === 'developeros.dev'` (comparação exata). O artefato estático é idêntico em todos os hosts, então a decisão acontece em runtime, em duas camadas independentes: o bootstrap não injeta o fornecedor fora do host, e `trackPageview` se recusa a enviar.
+
+Consequência: **previews (`*.workers.dev`), `www.developeros.dev`, `localhost` e Vercel nunca baixam `count.js` nem enviam dado algum** — inclusive o IP do visitante não chega ao CDN do fornecedor. Não há variável de build nem feature flag (§13.7: nenhuma variável ou secret).
+
+### 14.3 O que é enviado
+
+- **Caminho** (`resolvedLocation.pathname`, explícito — o `count.js` nunca consulta o `canonical` quando recebe `path`, então o canonical da home ou de artigos é irrelevante para a contagem), **título** da página no momento da resolução e **referrer** (padrão do fornecedor: `document.referrer`, constante durante a vida do documento).
+- Campos padrão do fornecedor, sem controle do projeto: `q` (a query string atual), `s` (largura de tela), `b` (indicador de bot do próprio script), `rnd`.
+- EN e PT-BR são caminhos distintos e **não são agregados** (ADR-0011 I2).
+- **Nunca** vai para analytics: o texto do Search (que não está na URL), qualquer entrada digitada ou texto livre (ADR-0008), eventos customizados (não existem), cookie ou armazenamento do navegador. O projeto não grava nada no storage; o `localStorage.skipgc` só é escrito pelo próprio fornecedor se o visitante abrir `#toggle-goatcounter` (opt-out do visitante).
+- URLs inexistentes (404) são contadas sob o próprio pathname. O pathname de uma URL não é entrada de Search.
+- Restauração por bfcache (voltar de um site externo) não gera pageview — nem o script do fornecedor sozinho geraria. Aceito sob A8.
+
+### 14.4 Primeira página e carregamento tardio
+
+O `count.js` é assíncrono e pode terminar de carregar depois da renderização. Regra (AC-2 da Issue #93, como emendada em 2026-10-18):
+
+- A primeira página fica retida como um único *snapshot* `{ path, title, search }` tirado na resolução e nunca atualizado; é enviada quando o script carrega.
+- Navegações **posteriores à primeira e anteriores à prontidão** do fornecedor **são descartadas** (perda aceita por A8), nunca enviadas depois.
+- O fornecedor lê a query sempre de `location.search` no instante do envio e não aceita outra. Por isso o snapshot só é enviado se a query atual ainda for a da primeira página; **se mudou, o pageview da primeira página é descartado** em vez de ser enviado com a campanha de outra página. É a única perda de primeira página que o projeto admite.
+- Não há fila, timer, polling nem retry. O estado é um snapshot.
+
+### 14.5 Como ler os números
+
+Os números são **direcionais, não exatos** (A8): servem para tendência e para saber quais páginas e referrers aparecem, **não** para contar humanos. O GoatCounter não é detector de bots; diferenças em relação ao dashboard da Cloudflare **não são prova de automação** e os dois conjuntos **não são reconciliáveis**. Estes números **não devem fundamentar regras automáticas de segurança**. O referrer é anexado pelo fornecedor a todo pageview do ciclo de vida de um documento, e sua fonte parece contá-lo apenas na primeira visita de uma sessão; é semântica do fornecedor, aceita.
+
+### 14.6 Registro do dashboard do fornecedor (G3)
+
+Mesma forma de §13.7: a tabela é o **contrato que o dashboard deve espelhar**; configurar é ação humana, fora do diff. Nenhum valor abaixo foi lido ou alterado por agente.
+
+| Campo (dashboard) | Valor exigido | Estado |
+|---|---|---|
+| Código do site | `hrqhm` (registrado no histórico da Issue #52; **existência e configuração atuais não são observáveis pelo repositório**) | **Pendente — confirmação do mantenedor (G3)** |
+| Cartão ou forma de pagamento | **nenhum**, e **nenhum upgrade ou cobrança automática** em qualquer limite (A6; resposta desconhecida interrompe a instalação) | **Pendente — confirmação do mantenedor (G3)** |
+| Registro de pageviews individuais | **desligado** (A2) | **Pendente — confirmação do mantenedor (G3)** |
+| Dashboard | **privado** | **Pendente — confirmação do mantenedor (G3)** |
+| Coletas opcionais (país, região, idioma, tamanho de tela, etc.) | estado escolhido pelo mantenedor, **a registrar aqui** | **Pendente — decisão do mantenedor (G2/G3)** |
+| UUID aleatório por pageview (documentação de sessões do fornecedor) | verificar contra A1 com o registro individual desligado | **Pendente — entrada da avaliação G2** |
+
+Identidade do script observado na instalação (baseline das afirmações de §14.3): `https://gc.zgo.at/count.js`, observado em 2026-10-18, **9213 bytes**, SHA-256 `792b7abd26c1fb6ae62906833e09a301251e2641816e69e4f95aba518f3fe3f0`. O script não é versionado nem usa SRI (decisão DP-3 da Issue #93): é um script de terceiro mutável, e uma mudança observada do fornecedor é gatilho de **revalidação** de §14.3 (e do gatilho 3 do ADR-0007 se degradar o serviço), não de um mecanismo novo.
+
+### 14.7 Validação em produção
+
+Após o deploy, a Issue #93 recebe um registro datado (AC-8) com: os cenários de AC-1 observados como requisições no painel de rede em `developeros.dev`; uma visita com o fornecedor bloqueado; um preview sem dado enviado; e o dashboard mostrando caminhos EN e PT-BR e ao menos um referrer externo. A contagem agregada do dashboard **não** é evidência de exatamente-uma-emissão por navegação. `docs/roadmap.md` só é atualizado depois disso.
