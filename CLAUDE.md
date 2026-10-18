@@ -45,6 +45,17 @@ When proposing or drafting an ADR in `docs/adr/`:
 - Must include sections: **Contexto**, **Decisão**, **Status** (Proposto/Aceito/Substituído/Depreciado), e **Consequências** (prós e contras).
 - Do not modify accepted ADRs to rewrite historical decisions. Create a new ADR when a previous decision is superseded.
 
+## Engineering Workflow
+
+Non-trivial changes (as defined in `docs/conventions.md` §11.5) follow the AI Engineering Workflow v2.0 (`docs/ai-engineering-workflow.md`).
+
+- Precedence: accepted ADRs and `docs/conventions.md` prevail over the workflow when they conflict. Surface the conflict instead of resolving it silently.
+- The Mission (GitHub Issue) defines success. Do not define, weaken, or reinterpret acceptance criteria.
+- Do not implement before explicit human approval of the plan. Simple Issues keep the formal-plan exemption of `docs/conventions.md` §11.9, but still need a Mission, acceptance criteria, and human approval where applicable. Keep process proportional to risk.
+- Report evidence as PASS / FAIL / NOT EXECUTED / NOT LOCALLY PROVABLE.
+- The workflow is frozen and kept in English, as an exception to the Portuguese documentation rule.
+- Eval Cases additionally follow `docs/evals/evaluation-protocol-v2.md`.
+
 ## Git
 
 The workflow is defined by ADR-0004 (`docs/adr/0004-estrategia-de-git-e-branching.md`); operational conventions are in `docs/conventions.md` §11.
