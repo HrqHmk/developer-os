@@ -10,7 +10,7 @@
  * See `docs/conventions.md` §14 and Issue #93.
  */
 
-export const ANALYTICS_HOSTNAME = 'developeros.dev'
+const ANALYTICS_HOSTNAME = 'developeros.dev'
 const VENDOR_SCRIPT_URL = 'https://gc.zgo.at/count.js'
 const VENDOR_ENDPOINT = 'https://hrqhm.goatcounter.com/count'
 
