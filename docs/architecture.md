@@ -113,6 +113,8 @@ Esta é a estrutura-alvo: diretórios nascem quando há código que os justifiqu
 
 **Por que a Newsletter não criou `src/integrations/`:** o modelo de integração escolhido na Issue #53 é um `<form>` HTML nativo que o browser submete direto ao endpoint público do provider, com a resposta confinada a um iframe oculto. Não existe adaptador traduzindo evento de domínio em payload de fornecedor, nem chamada de rede feita pelo projeto, nem credencial — não há camada de mapeamento para isolar. Criar `src/integrations/newsletter.ts` produziria um arquivo sem responsabilidade própria, contra `architecture.md` §11. O gatilho de `src/integrations/` continua sendo a primeira integração que de fato tenha o que mapear.
 
+**Chrome global (Issue #95):** `site-footer.tsx` é o primeiro elemento compartilhado por todas as páginas. É renderizado uma única vez por `__root.tsx`, depois do conteúdo da rota e inclusive na página de não encontrado, e traz o aviso de estatísticas de visitas, o link para a página de privacidade no idioma da URL e o contato `hello@developeros.dev`. As páginas continuam donas do próprio `<main>`, e os layouts `blog.tsx` e `projects.tsx` continuam sem chrome próprio. A página de privacidade (`privacy-page.tsx`, rotas `/privacy` e `/pt-br/privacy`) segue o padrão das demais páginas bilíngues. Regras do texto, fontes e ressalvas em `conventions.md` §15.
+
 ---
 
 ## 5. Conteúdo

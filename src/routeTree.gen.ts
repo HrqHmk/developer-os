@@ -15,6 +15,7 @@ import { Route as ArchitectureRouteImport } from './routes/architecture'
 import { Route as BlogRouteImport } from './routes/blog'
 import { Route as ChangelogRouteImport } from './routes/changelog'
 import { Route as LearningRouteImport } from './routes/learning'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ProjectsRouteImport } from './routes/projects'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as UsesRouteImport } from './routes/uses'
@@ -28,6 +29,7 @@ import { Route as PtBrArchitectureRouteImport } from './routes/pt-br/architectur
 import { Route as PtBrBlogRouteImport } from './routes/pt-br/blog'
 import { Route as PtBrChangelogRouteImport } from './routes/pt-br/changelog'
 import { Route as PtBrLearningRouteImport } from './routes/pt-br/learning'
+import { Route as PtBrPrivacyRouteImport } from './routes/pt-br/privacy'
 import { Route as PtBrProjectsRouteImport } from './routes/pt-br/projects'
 import { Route as PtBrSearchRouteImport } from './routes/pt-br/search'
 import { Route as PtBrUsesRouteImport } from './routes/pt-br/uses'
@@ -64,6 +66,11 @@ const ChangelogRoute = ChangelogRouteImport.update({
 const LearningRoute = LearningRouteImport.update({
   id: '/learning',
   path: '/learning',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProjectsRoute = ProjectsRouteImport.update({
@@ -131,6 +138,11 @@ const PtBrLearningRoute = PtBrLearningRouteImport.update({
   path: '/pt-br/learning',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PtBrPrivacyRoute = PtBrPrivacyRouteImport.update({
+  id: '/pt-br/privacy',
+  path: '/pt-br/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PtBrProjectsRoute = PtBrProjectsRouteImport.update({
   id: '/pt-br/projects',
   path: '/pt-br/projects',
@@ -174,6 +186,7 @@ export interface FileRoutesByFullPath {
   '/blog': typeof BlogRouteWithChildren
   '/changelog': typeof ChangelogRoute
   '/learning': typeof LearningRoute
+  '/privacy': typeof PrivacyRoute
   '/projects': typeof ProjectsRouteWithChildren
   '/search': typeof SearchRoute
   '/uses': typeof UsesRoute
@@ -184,6 +197,7 @@ export interface FileRoutesByFullPath {
   '/pt-br/blog': typeof PtBrBlogRouteWithChildren
   '/pt-br/changelog': typeof PtBrChangelogRoute
   '/pt-br/learning': typeof PtBrLearningRoute
+  '/pt-br/privacy': typeof PtBrPrivacyRoute
   '/pt-br/projects': typeof PtBrProjectsRouteWithChildren
   '/pt-br/search': typeof PtBrSearchRoute
   '/pt-br/uses': typeof PtBrUsesRoute
@@ -201,6 +215,7 @@ export interface FileRoutesByTo {
   '/architecture': typeof ArchitectureRoute
   '/changelog': typeof ChangelogRoute
   '/learning': typeof LearningRoute
+  '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
   '/uses': typeof UsesRoute
   '/blog/$slug': typeof BlogSlugRoute
@@ -209,6 +224,7 @@ export interface FileRoutesByTo {
   '/pt-br/architecture': typeof PtBrArchitectureRoute
   '/pt-br/changelog': typeof PtBrChangelogRoute
   '/pt-br/learning': typeof PtBrLearningRoute
+  '/pt-br/privacy': typeof PtBrPrivacyRoute
   '/pt-br/search': typeof PtBrSearchRoute
   '/pt-br/uses': typeof PtBrUsesRoute
   '/blog': typeof BlogIndexRoute
@@ -227,6 +243,7 @@ export interface FileRoutesById {
   '/blog': typeof BlogRouteWithChildren
   '/changelog': typeof ChangelogRoute
   '/learning': typeof LearningRoute
+  '/privacy': typeof PrivacyRoute
   '/projects': typeof ProjectsRouteWithChildren
   '/search': typeof SearchRoute
   '/uses': typeof UsesRoute
@@ -237,6 +254,7 @@ export interface FileRoutesById {
   '/pt-br/blog': typeof PtBrBlogRouteWithChildren
   '/pt-br/changelog': typeof PtBrChangelogRoute
   '/pt-br/learning': typeof PtBrLearningRoute
+  '/pt-br/privacy': typeof PtBrPrivacyRoute
   '/pt-br/projects': typeof PtBrProjectsRouteWithChildren
   '/pt-br/search': typeof PtBrSearchRoute
   '/pt-br/uses': typeof PtBrUsesRoute
@@ -257,6 +275,7 @@ export interface FileRouteTypes {
     | '/blog'
     | '/changelog'
     | '/learning'
+    | '/privacy'
     | '/projects'
     | '/search'
     | '/uses'
@@ -267,6 +286,7 @@ export interface FileRouteTypes {
     | '/pt-br/blog'
     | '/pt-br/changelog'
     | '/pt-br/learning'
+    | '/pt-br/privacy'
     | '/pt-br/projects'
     | '/pt-br/search'
     | '/pt-br/uses'
@@ -284,6 +304,7 @@ export interface FileRouteTypes {
     | '/architecture'
     | '/changelog'
     | '/learning'
+    | '/privacy'
     | '/search'
     | '/uses'
     | '/blog/$slug'
@@ -292,6 +313,7 @@ export interface FileRouteTypes {
     | '/pt-br/architecture'
     | '/pt-br/changelog'
     | '/pt-br/learning'
+    | '/pt-br/privacy'
     | '/pt-br/search'
     | '/pt-br/uses'
     | '/blog'
@@ -309,6 +331,7 @@ export interface FileRouteTypes {
     | '/blog'
     | '/changelog'
     | '/learning'
+    | '/privacy'
     | '/projects'
     | '/search'
     | '/uses'
@@ -319,6 +342,7 @@ export interface FileRouteTypes {
     | '/pt-br/blog'
     | '/pt-br/changelog'
     | '/pt-br/learning'
+    | '/pt-br/privacy'
     | '/pt-br/projects'
     | '/pt-br/search'
     | '/pt-br/uses'
@@ -338,6 +362,7 @@ export interface RootRouteChildren {
   BlogRoute: typeof BlogRouteWithChildren
   ChangelogRoute: typeof ChangelogRoute
   LearningRoute: typeof LearningRoute
+  PrivacyRoute: typeof PrivacyRoute
   ProjectsRoute: typeof ProjectsRouteWithChildren
   SearchRoute: typeof SearchRoute
   UsesRoute: typeof UsesRoute
@@ -346,6 +371,7 @@ export interface RootRouteChildren {
   PtBrBlogRoute: typeof PtBrBlogRouteWithChildren
   PtBrChangelogRoute: typeof PtBrChangelogRoute
   PtBrLearningRoute: typeof PtBrLearningRoute
+  PtBrPrivacyRoute: typeof PtBrPrivacyRoute
   PtBrProjectsRoute: typeof PtBrProjectsRouteWithChildren
   PtBrSearchRoute: typeof PtBrSearchRoute
   PtBrUsesRoute: typeof PtBrUsesRoute
@@ -394,6 +420,13 @@ declare module '@tanstack/react-router' {
       path: '/learning'
       fullPath: '/learning'
       preLoaderRoute: typeof LearningRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/projects': {
@@ -485,6 +518,13 @@ declare module '@tanstack/react-router' {
       path: '/pt-br/learning'
       fullPath: '/pt-br/learning'
       preLoaderRoute: typeof PtBrLearningRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pt-br/privacy': {
+      id: '/pt-br/privacy'
+      path: '/pt-br/privacy'
+      fullPath: '/pt-br/privacy'
+      preLoaderRoute: typeof PtBrPrivacyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pt-br/projects': {
@@ -600,6 +640,7 @@ const rootRouteChildren: RootRouteChildren = {
   BlogRoute: BlogRouteWithChildren,
   ChangelogRoute: ChangelogRoute,
   LearningRoute: LearningRoute,
+  PrivacyRoute: PrivacyRoute,
   ProjectsRoute: ProjectsRouteWithChildren,
   SearchRoute: SearchRoute,
   UsesRoute: UsesRoute,
@@ -608,6 +649,7 @@ const rootRouteChildren: RootRouteChildren = {
   PtBrBlogRoute: PtBrBlogRouteWithChildren,
   PtBrChangelogRoute: PtBrChangelogRoute,
   PtBrLearningRoute: PtBrLearningRoute,
+  PtBrPrivacyRoute: PtBrPrivacyRoute,
   PtBrProjectsRoute: PtBrProjectsRouteWithChildren,
   PtBrSearchRoute: PtBrSearchRoute,
   PtBrUsesRoute: PtBrUsesRoute,
