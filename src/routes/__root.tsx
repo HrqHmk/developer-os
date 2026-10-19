@@ -11,6 +11,7 @@ import { THEME_BOOTSTRAP_SCRIPT } from '../lib/theme'
 import { htmlLang, localeFromPathname } from '../lib/locale'
 import { FloatingThemeControl } from '../components/theme-control'
 import { RssAlternateLink } from '../components/rss-alternate-link'
+import { SiteFooter } from '../components/site-footer'
 
 export const Route = createRootRoute({
   head: () => ({
@@ -60,6 +61,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
       <body className="bg-background font-sans text-foreground">
         <FloatingThemeControl />
         {children}
+        <SiteFooter />
         <Scripts />
       </body>
     </html>
