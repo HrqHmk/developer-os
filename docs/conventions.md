@@ -643,3 +643,76 @@ Nasce da Issue #87. Registra a política de `<link rel="canonical">` para as pá
 - **Mecanismo.** Opt-in explícito em `pageHead()` (`src/lib/site-metadata.ts`), pela opção `canonicalLocale`, usado apenas pelas duas rotas de artigo. Sem a opção, nenhum canonical é emitido.
 - **A regra não se aplica automaticamente às demais páginas.** A home mantém o canonical próprio da Issue #62; as outras páginas continuam sem canonical. Uma política de SEO para o site inteiro precisa de análise separada.
 - **Motivação.** A barra final responde `307`, temporário (§13.8), e URLs com query string (`?ref=…`, §13.11.1) respondem `200` com o mesmo conteúdo. O canonical consolida essas variantes na URL própria do artigo.
+
+## 15. Transparência e privacidade
+
+> §14 está reservado à seção de Analytics da PR #94 (Issue #93).
+
+Nasce da Issue #95. Registra o primeiro chrome compartilhado do site, a página de privacidade e as regras que mantêm o texto público verdadeiro. Não é avaliação jurídica e não decide nada sobre o Analytics: os gates G2 e G3 da Issue #93 continuam abertos e não são satisfeitos por esta seção.
+
+### 15.1 Rodapé global
+
+- `src/components/site-footer.tsx` é o **primeiro chrome compartilhado** do site (decisão humana da Issue #95). É renderizado uma única vez em `__root.tsx`, depois do conteúdo da rota e antes de `<Scripts />`, e por isso aparece em todas as páginas, nos dois idiomas, inclusive na página de não encontrado.
+- Conteúdo: o aviso "This site uses GoatCounter for aggregate visit statistics." (e o equivalente em PT-BR), o link para a página de privacidade no idioma da URL e o contato `hello@developeros.dev`.
+- O idioma vem do pathname, como em `FloatingThemeControl`. O rodapé é marcação estática, sem estado nem efeito, então está completo no HTML pré-renderizado e funciona sem JavaScript.
+- É filho direto de `<body>`, fora de qualquer `<main>`, e por isso é o landmark `contentinfo`. As páginas continuam donas do próprio `<main>`.
+- Nas páginas com `min-h-screen`, o rodapé fica logo abaixo da dobra (decisão DP-3). Os componentes dessas páginas não foram alterados.
+
+### 15.2 Página de privacidade
+
+- Rotas `/privacy` e `/pt-br/privacy`, com o corpo em `src/components/privacy-page.tsx`, no mesmo padrão das demais páginas bilíngues (ADR-0011 I5). `head()` usa `pageHead('/privacy', …)`, com `hreflang` e sem canonical (política de §13.12).
+- A paridade de estrutura entre os idiomas (seções, parágrafos, links externos, contato e data) é verificada por `privacy-page.test.tsx`.
+- **"Last updated"** é a data de publicação do texto (decisão DP-6), definida em `LAST_UPDATED` no último commit antes do merge. Só muda em revisão substantiva (§15.5).
+- Nenhum nome pessoal do mantenedor é publicado. O responsável identificado é o Developer OS, pelo contato `hello@developeros.dev`.
+
+### 15.3 Fontes de cada afirmação pública
+
+Cada afirmação da página tem fonte, e nenhuma é mais forte do que a evidência. Legenda: **R** repositório · **V** documentação do fornecedor (lida em 2026-10-18) · **M** verificação do mantenedor (T1a/T3 da Issue #95) · **P** pós-ativação (T1b).
+
+| # | Afirmação | Fonte | Tipo |
+|---|---|---|---|
+| S1 | O Developer OS é o responsável; contato `hello@` | Mission #95 (decisão); T3 | M |
+| S2 | O site usa o GoatCounter | PR #94 @ `b0ad415`; ADR-0007 §3. **Só passa a ser verdade após o merge da #94** (§15.6) | R + M |
+| S3 | Propósito editorial; números aproximados | ADR-0007 (propósito, A8) | R |
+| S4 | Uma visualização registrada leva caminho + query, título, página de origem, largura da tela e campos técnicos (`b`, `rnd`); nenhum evento; nunca o texto da Busca. Nem toda navegação é registrada | `analytics.ts` da PR #94 @ `b0ad415`; T1a; captura de requisições em T1b | R + M + P |
+| S5 | O GoatCounter recebe IP e User-Agent | goatcounter.com/help/sessions | V |
+| S6 | Não armazena IP nem o User-Agent completo. **Pode** derivar navegador, sistema operacional, localização, idioma e largura; cada site pode desativar qualquer um deles. Nada é afirmado sobre quais campos este site de fato armazena | goatcounter.com/help/privacy (8 jun 2025): "doesn't store IP addresses, the full User-Agent header, or any tracker ID"; lista de campos; "Sites may disable collecting any of this data" | V |
+| S7 | Enviado só a partir de `developeros.dev` | Regra de host da PR #94 (testada); T1b | R + P |
+| S8 | Bloqueado → nada é enviado; o site não muda | PR #94 (testes sem fornecedor) | R + P |
+| S9 | Informações técnicas da requisição são tratadas temporariamente para distinguir visitas. Nada é afirmado sobre a sequência aleatória, seu armazenamento ou sua duração | /help/privacy e /help/sessions concordam só neste ponto. A divergência entre elas fica fora do texto público (§15.4) | V |
+| S10 | Visualizações individuais desativadas; painel privado | Painel do GoatCounter (registro de G3 da #94); T1a | M |
+| S11 | O código do site não define cookies | `git grep document.cookie` vazio; cookies de infraestrutura da Cloudflare → T1b | R + P |
+| S12 | O GoatCounter não armazena nada no navegador | /help/privacy: "doesn't store any information in the browser with cookies, localStorage…"; T1b | V + P |
+| S13 | `localStorage.theme`, que não é enviado | `src/lib/theme.ts` | R |
+| S14 | Servido pela Cloudflare, que trata IP e dados da requisição | `wrangler.jsonc`, ADR-0006; cloudflare.com/privacypolicy (vigente desde 4 nov 2025) | R + V |
+| S15 | `hello@` via Email Routing → caixa de e-mail mantida pelo mantenedor (provedor não nomeado, decisão DP-5) | Relato do mantenedor (Mission); T3 | M |
+| S16 | O e-mail vai do navegador direto ao Buttondown | `src/components/newsletter-signup.tsx` | R |
+| S17 | Nenhuma lista de assinantes fora do Buttondown | `architecture.md` §6; mantenedor confirma que não há lista exportada | R + M |
+| S18 | Confirmação por e-mail; link de cancelamento em toda edição | Comportamento real da conta Buttondown (T1a) | M |
+| S19 | Nenhum prazo de retenção definido **para as estatísticas de visitas** | Mantenedor (T1a). Não diz nada sobre e-mails ou outros dados | M |
+| S20 | Agregados sem vínculo com visitantes individuais | /help/privacy: "aggregate tables … no way to link data between them" + S10 | V + M |
+| S21 | Correção e exclusão viáveis para e-mails e inscrição | Mantenedor confirma que consegue apagar mensagens e o assinante no Buttondown (T1a) | M |
+| S22 | Links para as três políticas; cada uma descreve o tratamento de dados e as opções de contato/solicitação do fornecedor. Nada afirma que um fornecedor aceita pedidos de visitantes | As três políticas, verificadas em 2026-10-18 e de novo na implementação | R + V |
+
+**Afirmações proibidas no texto público:** "anônimo" ou equivalente; conformidade com LGPD/GDPR, adequação da identificação do controlador ou dispensa de consentimento; prazo de retenção, local de hospedagem ou prazo de resposta não documentados; promessa de apagar dados agregados; promessa de que toda navegação é contada; quando ou se o GoatCounter persiste um identificador de sessão; que todo campo derivável é armazenado para este site; que um fornecedor deve aceitar, ou aceita, um pedido de visitante.
+
+### 15.4 Ressalvas internas e questões para G2
+
+O texto público omite, de propósito, o que segue:
+
+- **Não é parecer jurídico nem auditoria.** A página descreve o que o projeto faz e o que os fornecedores declaram; não conclui nada sobre conformidade.
+- **Esta seção não satisfaz G2 nem G3 da Issue #93**, e T1b não os substitui.
+- Questões em aberto para G2:
+  - **Opt-out.** Se é necessário um opt-out do Analytics. Não foi implementado e não se presume desnecessário.
+  - **Identificação do controlador.** Se "Developer OS" mais o endereço de contato é formalmente suficiente.
+  - **Sessions/UUID.** A política de privacidade do GoatCounter diz que a sequência aleatória só é armazenada com visualizações individuais ativadas; a página /help/sessions diz "Use the UUID in the database". O texto público não depende de nenhuma das duas leituras (S9).
+  - **Retenção.** A página não declara prazo. Se G2 quiser um, ele precisa antes ser verificado na documentação do fornecedor.
+
+### 15.5 Regra de revisão
+
+Uma mudança na política de um fornecedor, na configuração do GoatCounter, da Cloudflare ou do Buttondown, ou no comportamento do Analytics (PR #94 ou posterior) exige revisar o texto nos dois idiomas, a tabela de §15.3 e a data `LAST_UPDATED`. Uma divergência encontrada em T1b é corrigida em follow-up e registrada na Issue #95.
+
+### 15.6 Janela antes da ativação
+
+- Entre o merge da #95 e o merge da #94, o aviso do rodapé e as seções "Visit statistics" e "Sessions" descrevem uma coleta que ainda não está ativa. O mantenedor aceitou essa janela explicitamente (decisão DP-2, 2026-10-18).
+- **Se a PR #94 for fechada sem merge**, uma Issue de follow-up corrige ou remove o aviso e essas seções, o achado é registrado na Issue #95, e a reserva de §14 desta seção é removida ou §15 é renumerada.
