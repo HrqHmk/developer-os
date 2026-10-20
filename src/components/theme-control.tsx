@@ -90,9 +90,10 @@ export function ThemeControl({ locale = 'en' }: Readonly<{ locale?: Locale }>) {
  * Refresh v1, Issue #57). Deterministic from the URL, so server and client
  * render the same thing — no portal, no hydration mismatch.
  *
- * It is also the only chrome present on every other route, so it carries the
- * `LanguageSwitch` there, placed before the theme selector to keep DOM order
- * equal to visual order (Issue #83).
+ * It is also the only top chrome on every other route (the global footer,
+ * Issue #95, sits after the page), so it carries the `LanguageSwitch` there,
+ * placed before the theme selector to keep DOM order equal to visual order
+ * (Issue #83).
  */
 export function FloatingThemeControl() {
   const pathname = useRouterState({ select: (state) => state.location.pathname })
