@@ -650,7 +650,7 @@ Nasce da Issue #87. Registra a política de `<link rel="canonical">` para as pá
 
 Nasce da Issue #93 (retomada da Issue #52, adiada). Governado pelo ADR-0007 (A1–A9) e pelo ADR-0010; este capítulo registra as **convenções operacionais** que o ADR-0007 §3 remeteu para cá, agora que existe um documento raiz. Não introduz decisão arquitetural.
 
-> **Estado: implementado, não ativado.** Mesclar a Pull Request da Issue #93 **é** a ativação da coleta (merge publica em produção). Os gates **G2** (avaliação de privacidade) e **G3** (condições do fornecedor, §14.6) são condição humana de merge e **não** estão concluídos por este documento. Nenhum artefato deste repositório afirma conformidade com LGPD/GDPR.
+> **Estado: ativo em produção desde 2026-10-20** (merge da PR #94). Os gates G2 (avaliação de privacidade) e G3 (condições do fornecedor, §14.6) e a validação em produção (AC-8, §14.7) estão registrados como PASS pelo mantenedor na Issue #93. Nenhum artefato deste repositório afirma conformidade com LGPD/GDPR.
 
 ### 14.1 Onde o código vive
 
@@ -693,7 +693,7 @@ Mesma forma de §13.7: a tabela é o **contrato que o dashboard deve espelhar**;
 
 | Campo (dashboard) | Valor exigido | Estado |
 |---|---|---|
-| Código do site | `hrqhm` (registrado no histórico da Issue #52; **existência e configuração atuais não são observáveis pelo repositório**) | **PASS (G3)** — o mantenedor verificou o site `developeros.dev` no GoatCounter; o registro não cita o código `hrqhm` |
+| Código do site | `hrqhm` (registrado no histórico da Issue #52) | **PASS (G3, AC-8)** — o mantenedor verificou o site `developeros.dev` no GoatCounter; o registro G3 não cita o código `hrqhm`, mas em AC-8 o dashboard exibiu os caminhos enviados pelo site em produção |
 | Cartão ou forma de pagamento | **nenhum**, e **nenhum upgrade ou cobrança automática** em qualquer limite (A6; resposta desconhecida interrompe a instalação) | **PASS (G3)** — termos gratuitos revistos; nenhum controle de cobrança ou assinatura na conta; nenhuma autorização de pagamento conhecida |
 | Registro de pageviews individuais | **desligado** (A2) | **PASS (G3)** — desligado |
 | Dashboard | **privado** | **PASS (G3)** — acessível só a usuários autenticados; incorporação da contagem desativada; nenhum site externo autorizado a incorporar |
@@ -704,15 +704,15 @@ Identidade do script observado na instalação (baseline das afirmações de §1
 
 ### 14.7 Validação em produção
 
-Após o deploy, a Issue #93 recebe um registro datado (AC-8) com: os cenários de AC-1 observados como requisições no painel de rede em `developeros.dev`; uma visita com o fornecedor bloqueado; um preview sem dado enviado; e o dashboard mostrando caminhos EN e PT-BR e ao menos um referrer externo. A contagem agregada do dashboard **não** é evidência de exatamente-uma-emissão por navegação. `docs/roadmap.md` só é atualizado depois disso.
+Após o deploy, a Issue #93 recebe um registro datado (AC-8) com: os cenários de AC-1 observados como requisições no painel de rede em `developeros.dev`; uma visita com o fornecedor bloqueado; um preview sem dado enviado; e o dashboard mostrando caminhos EN e PT-BR e ao menos um referrer externo. A contagem agregada do dashboard **não** é evidência de exatamente-uma-emissão por navegação.
+
+**Registrado em 2026-10-20 (Issue #93): AC-8 PASS.** Cobriu o pageview inicial (HTTP 200), a navegação SPA (`/`, `/about`, `/privacy`, `/pt-br/privacy`) sem requisições duplicadas visíveis, o site funcionando com o GoatCounter bloqueado, caminhos EN e PT-BR e um referrer externo no dashboard, e nenhuma requisição do preview de PR da Cloudflare ao fornecedor. A verificação cobre os cenários de navegador observados, não todos os navegadores nem condições de rede. A atualização de `docs/roadmap.md` foi feita depois desse registro.
 
 ---
 
 ## 15. Transparência e privacidade
 
-> §14 está reservado à seção de Analytics da PR #94 (Issue #93).
-
-Nasce da Issue #95. Registra o primeiro chrome compartilhado do site, a página de privacidade e as regras que mantêm o texto público verdadeiro. Não é avaliação jurídica e não decide nada sobre o Analytics: os gates G2 e G3 da Issue #93 continuam abertos e não são satisfeitos por esta seção.
+Nasce da Issue #95. Registra o primeiro chrome compartilhado do site, a página de privacidade e as regras que mantêm o texto público verdadeiro. Não é avaliação jurídica e não decide nada sobre o Analytics: os gates G2 e G3 da Issue #93 foram registrados como PASS pelo mantenedor na própria Issue (2026-10-20), e não por esta seção.
 
 ### 15.1 Rodapé global
 
@@ -727,7 +727,7 @@ Nasce da Issue #95. Registra o primeiro chrome compartilhado do site, a página 
 - Rotas `/privacy` e `/pt-br/privacy`, com o corpo em `src/components/privacy-page.tsx`, no mesmo padrão das demais páginas bilíngues (ADR-0011 I5). `head()` usa `pageHead('/privacy', …)`, com `hreflang` e sem canonical (política de §13.12).
 - A paridade de estrutura entre os idiomas (seções, parágrafos, links externos, contato e data) é verificada por `privacy-page.test.tsx`.
 - **"Last updated"** é a data de publicação do texto (decisão DP-6), definida em `LAST_UPDATED` no último commit antes do merge. Só muda em revisão substantiva (§15.5).
-- O controlador dos dados é identificado como Henrique Hiroshi, mantenedor do Developer OS, com o contato de privacidade `hello@developeros.dev` (decisão humana, pendência G2 da Issue #93). Nenhum outro dado pessoal do mantenedor (CPF, endereço, telefone) é publicado.
+- O controlador dos dados é identificado como Henrique Hiroshi, mantenedor do Developer OS, com o contato de privacidade `hello@developeros.dev` (decisão humana, registrada em G2 da Issue #93). Nenhum outro dado pessoal do mantenedor (CPF, endereço, telefone) é publicado.
 
 ### 15.3 Fontes de cada afirmação pública
 
@@ -736,7 +736,7 @@ Cada afirmação da página tem fonte, e nenhuma é mais forte do que a evidênc
 | # | Afirmação | Fonte | Tipo |
 |---|---|---|---|
 | S1 | O controlador é Henrique Hiroshi, mantenedor do Developer OS; contato de privacidade `hello@` | Decisão humana (G2 da #93), que substitui a decisão original da Mission #95; T3 | M |
-| S2 | O site usa o GoatCounter | PR #94 @ `b0ad415`; ADR-0007 §3. **Só passa a ser verdade após o merge da #94** (§15.6) | R + M |
+| S2 | O site usa o GoatCounter | PR #94 @ `b0ad415`; ADR-0007 §3. Verdadeiro desde o merge da #94 (2026-10-20); validado em produção (AC-8, T1b) | R + M |
 | S3 | Propósito editorial; números aproximados | ADR-0007 (propósito, A8) | R |
 | S4 | Uma visualização registrada leva caminho + query, título, página de origem, largura da tela e campos técnicos (`b`, `rnd`); nenhum evento; nunca o texto da Busca. Nem toda navegação é registrada | `analytics.ts` da PR #94 @ `b0ad415`; T1a; captura de requisições em T1b | R + M + P |
 | S5 | O GoatCounter recebe IP e User-Agent | goatcounter.com/help/sessions | V |
@@ -744,7 +744,7 @@ Cada afirmação da página tem fonte, e nenhuma é mais forte do que a evidênc
 | S7 | Enviado só a partir de `developeros.dev` | Regra de host da PR #94 (testada); T1b | R + P |
 | S8 | Bloqueado → nada é enviado; o site não muda | PR #94 (testes sem fornecedor) | R + P |
 | S9 | Informações técnicas da requisição são tratadas temporariamente para distinguir visitas. Nada é afirmado sobre a sequência aleatória, seu armazenamento ou sua duração | /help/privacy e /help/sessions concordam só neste ponto. A divergência entre elas fica fora do texto público (§15.4) | V |
-| S10 | Visualizações individuais desativadas; painel privado | Painel do GoatCounter (registro de G3 da #94); T1a | M |
+| S10 | Visualizações individuais desativadas; painel privado | Painel do GoatCounter (registro de G3 da #93); T1a | M |
 | S11 | O código do site não define cookies | `git grep document.cookie` vazio; cookies de infraestrutura da Cloudflare → T1b | R + P |
 | S12 | O GoatCounter não armazena nada no navegador | /help/privacy: "doesn't store any information in the browser with cookies, localStorage…"; T1b | V + P |
 | S13 | `localStorage.theme`, que não é enviado | `src/lib/theme.ts` | R |
@@ -760,23 +760,23 @@ Cada afirmação da página tem fonte, e nenhuma é mais forte do que a evidênc
 
 **Afirmações proibidas no texto público:** "anônimo" ou equivalente; conformidade com LGPD/GDPR, adequação da identificação do controlador ou dispensa de consentimento; prazo de retenção, local de hospedagem ou prazo de resposta não documentados; promessa de apagar dados agregados; promessa de que toda navegação é contada; quando ou se o GoatCounter persiste um identificador de sessão; que todo campo derivável é armazenado para este site; que um fornecedor deve aceitar, ou aceita, um pedido de visitante.
 
-### 15.4 Ressalvas internas e questões para G2
+### 15.4 Ressalvas internas e decisões de G2
 
 O texto público omite, de propósito, o que segue:
 
 - **Não é parecer jurídico nem auditoria.** A página descreve o que o projeto faz e o que os fornecedores declaram; não conclui nada sobre conformidade.
-- **Esta seção não satisfaz G2 nem G3 da Issue #93**, e T1b não os substitui.
-- Questões em aberto para G2:
-  - **Opt-out.** Se é necessário um opt-out do Analytics. Não foi implementado e não se presume desnecessário.
+- **Esta seção não satisfaz G2 nem G3 da Issue #93**; ambos foram registrados como PASS pelo mantenedor na Issue, e T1b (PASS em 2026-10-20) não os substitui.
+- Pontos tratados em G2 e o que permanece sem afirmação pública:
+  - **Opt-out.** Nenhum mecanismo universal de opt-out por visitante foi implementado, e a página não afirma que exista (G2). Pedidos seguem o procedimento de G2, por `hello@developeros.dev`.
   - **Identificação do controlador.** Decidida pelo humano: pessoa física identificada pelo nome e pelo contato `hello@`. A página não afirma que essa identificação é formalmente suficiente.
-  - **Sessions/UUID.** A política de privacidade do GoatCounter diz que a sequência aleatória só é armazenada com visualizações individuais ativadas; a página /help/sessions diz "Use the UUID in the database". O texto público não depende de nenhuma das duas leituras (S9).
-  - **Retenção.** A página não declara prazo. Se G2 quiser um, ele precisa antes ser verificado na documentação do fornecedor.
+  - **Sessions/UUID.** A política de privacidade do GoatCounter diz que a sequência aleatória só é armazenada com visualizações individuais ativadas; a página /help/sessions diz "Use the UUID in the database". O mantenedor manteve Sessions ligado em G2, reconhecendo o tratamento técnico temporário descrito pelo fornecedor. O texto público não depende de nenhuma das duas leituras (S9).
+  - **Retenção.** A página não declara prazo, e G2 não definiu um. Declarar um exige antes verificá-lo na documentação do fornecedor.
 
 ### 15.5 Regra de revisão
 
-Uma mudança na política de um fornecedor, na configuração do GoatCounter, da Cloudflare ou do Buttondown, ou no comportamento do Analytics (PR #94 ou posterior) exige revisar o texto nos dois idiomas, a tabela de §15.3 e a data `LAST_UPDATED`. Uma divergência encontrada em T1b é corrigida em follow-up e registrada na Issue #95.
+Uma mudança na política de um fornecedor, na configuração do GoatCounter, da Cloudflare ou do Buttondown, ou no comportamento do Analytics (PR #94 ou posterior) exige revisar o texto nos dois idiomas, a tabela de §15.3 e a data `LAST_UPDATED`. T1b (PASS em 2026-10-20, Issue #93) não registrou divergência; uma divergência futura é corrigida em follow-up e registrada na Issue #95.
 
-### 15.6 Janela antes da ativação
+### 15.6 Janela antes da ativação (encerrada)
 
-- Entre o merge da #95 e o merge da #94, o aviso do rodapé e as seções "Visit statistics" e "Sessions" descrevem uma coleta que ainda não está ativa. O mantenedor aceitou essa janela explicitamente (decisão DP-2, 2026-10-18).
-- **Se a PR #94 for fechada sem merge**, uma Issue de follow-up corrige ou remove o aviso e essas seções, o achado é registrado na Issue #95, e a reserva de §14 desta seção é removida ou §15 é renumerada.
+- Entre o merge da #95 e o merge da #94, o aviso do rodapé e as seções "Visit statistics" e "Sessions" descreveram uma coleta que ainda não estava ativa; o mantenedor aceitou essa janela explicitamente (decisão DP-2, 2026-10-18).
+- A janela fechou com o merge da #94 em 2026-10-20. O texto público descreve, desde então, uma coleta ativa, validada em produção (AC-8 e T1b, Issue #93).
