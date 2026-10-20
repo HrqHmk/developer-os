@@ -12,7 +12,7 @@ const LINK = `underline underline-offset-2 hover:text-foreground ${FOCUS_RING}`
  * commit before merge, and changed again only by a substantive revision —
  * a vendor policy, configuration or analytics change (`conventions.md` §15).
  */
-const LAST_UPDATED = '2026-10-19'
+const LAST_UPDATED = '2026-10-20'
 
 const POLICY_URLS = {
   goatcounter: 'https://www.goatcounter.com/help/privacy',
@@ -39,7 +39,10 @@ const COPY_EN = {
     {
       heading: 'Who is responsible',
       paragraphs: [
-        <>Developer OS is responsible for this site. For any question or request about privacy, write to {contact}.</>,
+        <>
+          Data controller: Henrique Hiroshi, maintainer of Developer OS. Privacy contact: {contact}. For any question or
+          request about privacy, write to that address.
+        </>,
       ],
     },
     {
@@ -124,8 +127,8 @@ const COPY: Record<Locale, typeof COPY_EN> = {
         heading: 'Quem é responsável',
         paragraphs: [
           <>
-            O Developer OS é o responsável por este site. Para qualquer dúvida ou pedido sobre privacidade, escreva
-            para {contact}.
+            Controlador dos dados: Henrique Hiroshi, mantenedor do Developer OS. Contato para assuntos de privacidade:{' '}
+            {contact}. Para qualquer dúvida ou pedido sobre privacidade, escreva para esse endereço.
           </>,
         ],
       },

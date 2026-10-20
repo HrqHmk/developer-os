@@ -663,7 +663,7 @@ Nasce da Issue #95. Registra o primeiro chrome compartilhado do site, a página 
 - Rotas `/privacy` e `/pt-br/privacy`, com o corpo em `src/components/privacy-page.tsx`, no mesmo padrão das demais páginas bilíngues (ADR-0011 I5). `head()` usa `pageHead('/privacy', …)`, com `hreflang` e sem canonical (política de §13.12).
 - A paridade de estrutura entre os idiomas (seções, parágrafos, links externos, contato e data) é verificada por `privacy-page.test.tsx`.
 - **"Last updated"** é a data de publicação do texto (decisão DP-6), definida em `LAST_UPDATED` no último commit antes do merge. Só muda em revisão substantiva (§15.5).
-- Nenhum nome pessoal do mantenedor é publicado. O responsável identificado é o Developer OS, pelo contato `hello@developeros.dev`.
+- O controlador dos dados é identificado como Henrique Hiroshi, mantenedor do Developer OS, com o contato de privacidade `hello@developeros.dev` (decisão humana, pendência G2 da Issue #93). Nenhum outro dado pessoal do mantenedor (CPF, endereço, telefone) é publicado.
 
 ### 15.3 Fontes de cada afirmação pública
 
@@ -671,7 +671,7 @@ Cada afirmação da página tem fonte, e nenhuma é mais forte do que a evidênc
 
 | # | Afirmação | Fonte | Tipo |
 |---|---|---|---|
-| S1 | O Developer OS é o responsável; contato `hello@` | Mission #95 (decisão); T3 | M |
+| S1 | O controlador é Henrique Hiroshi, mantenedor do Developer OS; contato de privacidade `hello@` | Decisão humana (G2 da #93), que substitui a decisão original da Mission #95; T3 | M |
 | S2 | O site usa o GoatCounter | PR #94 @ `b0ad415`; ADR-0007 §3. **Só passa a ser verdade após o merge da #94** (§15.6) | R + M |
 | S3 | Propósito editorial; números aproximados | ADR-0007 (propósito, A8) | R |
 | S4 | Uma visualização registrada leva caminho + query, título, página de origem, largura da tela e campos técnicos (`b`, `rnd`); nenhum evento; nunca o texto da Busca. Nem toda navegação é registrada | `analytics.ts` da PR #94 @ `b0ad415`; T1a; captura de requisições em T1b | R + M + P |
@@ -704,7 +704,7 @@ O texto público omite, de propósito, o que segue:
 - **Esta seção não satisfaz G2 nem G3 da Issue #93**, e T1b não os substitui.
 - Questões em aberto para G2:
   - **Opt-out.** Se é necessário um opt-out do Analytics. Não foi implementado e não se presume desnecessário.
-  - **Identificação do controlador.** Se "Developer OS" mais o endereço de contato é formalmente suficiente.
+  - **Identificação do controlador.** Decidida pelo humano: pessoa física identificada pelo nome e pelo contato `hello@`. A página não afirma que essa identificação é formalmente suficiente.
   - **Sessions/UUID.** A política de privacidade do GoatCounter diz que a sequência aleatória só é armazenada com visualizações individuais ativadas; a página /help/sessions diz "Use the UUID in the database". O texto público não depende de nenhuma das duas leituras (S9).
   - **Retenção.** A página não declara prazo. Se G2 quiser um, ele precisa antes ser verificado na documentação do fornecedor.
 
